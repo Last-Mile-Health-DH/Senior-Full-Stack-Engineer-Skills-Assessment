@@ -16,11 +16,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+# Get the uv binary (fast resolver — avoids pip's ResolutionTooDeep)
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
 # Copy only the requirements first to leverage Docker cache
 COPY requirements.txt .
 
 # Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# RUN pip install --no-cache-dir -r requirements.txt
+RUN --mount=type=cache,target=/root/.cache/uv uv pip install --system -r requirements.txt
 
 # Copy the application code
 COPY ./ /chainlit_app/

@@ -1,2 +1,2 @@
 chainlit==2.5.5
-sniffio
+sniffio==1.3.1

@@ -17,9 +17,13 @@ RUN useradd -ms /bin/bash -d ${HOME_DIR} container_user \
     && mkdir -p ${HOME_DIR} /tmp/prometheus \
     && chown -R container_user: ${HOME_DIR} /tmp/prometheus
 
+# Install uv (fast resolver, avoids pip's ResolutionTooDeep)
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+
 COPY requirements.txt /requirements.txt
 
-RUN --mount=type=cache,target=/root/.cache/pip pip install --no-cache-dir -r /requirements.txt
+# RUN --mount=type=cache,target=/root/.cache/pip pip install --no-cache-dir -r /requirements.txt
+RUN --mount=type=cache,target=/root/.cache/uv uv pip install --system -r /requirements.txt
 
 COPY . ${HOME_DIR}
 RUN find ${HOME_DIR} -type f -print0 | xargs -0 dos2unix
