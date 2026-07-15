@@ -1,0 +1,33 @@
+corpus_version: 1.0.0
+documents:
+- id: imci_chart_booklet_2014
+  title: WHO Integrated Management of Childhood Illness (IMCI) Chart Booklet
+  year: 2014
+  tier: outpatient_facility
+  publisher: World Health Organization
+  filename: imci_chart_booklet_2014.pdf
+  url: https://cdn.who.int/media/docs/default-source/mca-documents/child/imci-integrated-management-of-childhood-illness/imci-in-service-training/imci-chart-booklet.pdf?sfvrsn=f63af425_1
+  landing_page: https://www.who.int/publications/m/item/integrated-management-of-childhood-illness---chart-booklet-(march-2014)
+  license: © WHO 2014 — non-commercial use permitted; see WHO licensing
+  sha256: d10fd1d040bdbdb6db4254b8095e1d1722d0a3d2f80c3651b3003301a8a6959f
+- id: who_pocketbook_hospital_care_2013
+  title: WHO Pocket Book of Hospital Care for Children (2nd edition)
+  year: 2013
+  tier: referral_inpatient
+  publisher: World Health Organization
+  filename: who_pocketbook_hospital_care_2013.pdf
+  url: https://iris.who.int/bitstream/handle/10665/81170/9789241548373_eng.pdf
+  mirror_url: https://www.kenyapaediatric.org/wp-content/uploads/2020/08/WHO-pocket-book-of-hospital-care-for-children-2nd-edition_2013.pdf
+  landing_page: https://iris.who.int/handle/10665/81170
+  license: © WHO 2013 — non-commercial use permitted; see WHO licensing
+  sha256: e33a87efb135415d841b3b90038316f595852ed0fda4301044f3bf8af96d8123
+- id: caring_sick_child_community_2011
+  title: WHO/UNICEF Caring for the Sick Child in the Community (Participant Manual)
+  year: 2011
+  tier: community_health_worker
+  publisher: World Health Organization / UNICEF
+  filename: caring_sick_child_community_2011.pdf
+  url: https://files.givewell.org/files/DWDA%202009/Interventions/ORS/WHO_and_UNICEF_Caring_for_the_sick_child_in_the_community-_Participants_manual_2011.pdf
+  landing_page: https://www.who.int/teams/maternal-newborn-child-adolescent-health-and-ageing/child-health/integrated-management-of-childhood-illness
+  license: © WHO/UNICEF 2011 — non-commercial use permitted; see WHO licensing
+  sha256: 1d2708940727bb5d1275e66b93f1428efb5636333eceff8525593c684f8097da

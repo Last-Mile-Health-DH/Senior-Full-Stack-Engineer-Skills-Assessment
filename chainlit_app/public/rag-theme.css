@@ -1,0 +1,236 @@
+/*
+ * Chainlit theme for the Last Mile Health RAG chat.
+ *
+ * Chainlit exposes its design system as CSS custom properties on :root, so the palette is
+ * set there rather than by overriding internal class names. Only stable, documented
+ * surfaces are targeted: the CSS variables, semantic elements, and the few public
+ * data-testid hooks Chainlit ships. No internal/generated class names are relied on, so a
+ * Chainlit upgrade degrades to default styling instead of breaking the page.
+ */
+
+:root {
+  --rag-ink: #18212f;
+  --rag-ink-muted: #536173;
+  --rag-line: #d8dee8;
+  --rag-line-strong: #cbd7e3;
+  --rag-surface: #ffffff;
+  --rag-canvas: #eef2f5;
+  --rag-accent: #1f6f5b;
+  --rag-accent-dark: #185545;
+  --rag-accent-soft: #edf8f3;
+  --rag-cite: #a3132a;
+  --rag-focus: #1d4ed8;
+  --rag-radius: 10px;
+
+  /* Chainlit's own tokens, so themed components pick the palette up automatically. */
+  --primary: var(--rag-accent);
+  --primary-foreground: #ffffff;
+  --background: var(--rag-canvas);
+  --foreground: var(--rag-ink);
+  --card: var(--rag-surface);
+  --card-foreground: var(--rag-ink);
+  --popover: var(--rag-surface);
+  --popover-foreground: var(--rag-ink);
+  --border: var(--rag-line);
+  --input: var(--rag-line-strong);
+  --ring: var(--rag-focus);
+  --muted: #f1f5f9;
+  --muted-foreground: var(--rag-ink-muted);
+  --accent: var(--rag-accent-soft);
+  --accent-foreground: var(--rag-accent-dark);
+  --radius: var(--rag-radius);
+}
+
+body {
+  background: var(--rag-canvas);
+  color: var(--rag-ink);
+  font-family: system-ui, -apple-system, "Segoe UI", Arial, Helvetica, sans-serif;
+  line-height: 1.55;
+}
+
+/* A visible focus ring everywhere, which the default theme does not guarantee. */
+a:focus-visible,
+button:focus-visible,
+textarea:focus-visible,
+input:focus-visible,
+[role="button"]:focus-visible {
+  outline: 3px solid var(--rag-focus);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+a {
+  color: var(--rag-accent-dark);
+}
+
+/* ------------------------------------------------------------------ messages */
+
+[data-testid="message-composer"],
+[data-testid="chat-input"] {
+  border: 1px solid var(--rag-line-strong);
+  border-radius: var(--rag-radius);
+  background: var(--rag-surface);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+}
+
+[data-testid="user-message"],
+[data-testid="assistant-message"] {
+  border-radius: var(--rag-radius);
+  line-height: 1.6;
+}
+
+[data-testid="assistant-message"] {
+  border: 1px solid var(--rag-line);
+  background: var(--rag-surface);
+}
+
+[data-testid="user-message"] {
+  border: 1px solid #bdd8cf;
+  background: #f1faf6;
+}
+
+/* Readable measure: a full-width line of clinical prose is hard to scan. */
+.markdown-body {
+  max-width: 72ch;
+  font-size: 0.96rem;
+}
+
+.markdown-body p {
+  margin-bottom: 0.7rem;
+}
+
+.markdown-body ul,
+.markdown-body ol {
+  padding-left: 1.25rem;
+  margin-bottom: 0.7rem;
+}
+
+.markdown-body li {
+  margin-bottom: 0.25rem;
+}
+
+.markdown-body h3,
+.markdown-body strong {
+  color: var(--rag-ink);
+}
+
+/* Citation superscripts: small, distinct, and tied to the reference list below. */
+.markdown-body sup {
+  margin-left: 1px;
+  color: var(--rag-cite);
+  font-size: 0.68em;
+  font-weight: 700;
+}
+
+/* The "References" block the presenter appends after the answer. */
+.markdown-body hr,
+.markdown-body p > strong:only-child {
+  color: var(--rag-ink-muted);
+}
+
+.markdown-body ol {
+  color: var(--rag-ink-muted);
+  font-size: 0.86rem;
+}
+
+.markdown-body code {
+  padding: 1px 5px;
+  border: 1px solid var(--rag-line);
+  border-radius: 4px;
+  background: #f6f8fa;
+  font-size: 0.86em;
+}
+
+.markdown-body table {
+  border-collapse: collapse;
+  width: 100%;
+  overflow-x: auto;
+}
+
+.markdown-body th,
+.markdown-body td {
+  padding: 8px 10px;
+  border: 1px solid var(--rag-line);
+  text-align: left;
+}
+
+.markdown-body th {
+  background: #f3f5f8;
+  color: var(--rag-ink-muted);
+  font-size: 0.85rem;
+}
+
+/* ------------------------------------------------------------------ controls */
+
+textarea,
+input {
+  border-radius: 6px;
+}
+
+button {
+  border-radius: 6px;
+}
+
+/* ------------------------------------- "+" upload button inside the composer */
+
+/*
+ * Mounted into Chainlit's composer by rag-composer-upload.js. It sits at the bottom-left
+ * corner INSIDE the input frame, mirroring the Next.js chat surface. `#message-composer`
+ * and `#chat-input` are stable Chainlit element ids, not generated class names.
+ */
+#message-composer {
+  position: relative;
+}
+
+/* Reserve the space the button occupies so it never sits on top of typed text. */
+#message-composer #chat-input {
+  padding-left: 46px;
+}
+
+#rag-upload-btn {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--rag-line-strong);
+  border-radius: 50%;
+  background: #f8fafc;
+  color: var(--rag-accent-dark) !important;
+  font-family: inherit;
+  font-size: 1.3rem;
+  font-weight: 700;
+  line-height: 1;
+  text-decoration: none !important;
+  transition: background 140ms ease, border-color 140ms ease;
+}
+
+#rag-upload-btn:hover {
+  border-color: var(--rag-accent);
+  background: var(--rag-accent-soft);
+}
+
+#rag-upload-btn:focus-visible {
+  outline: 3px solid var(--rag-focus);
+  outline-offset: 2px;
+}
+
+/* A link to the upload page inside message text is prose, not a button. */
+.markdown-body a[href*="/documents"] {
+  text-decoration: underline;
+}
+
+@media (max-width: 640px) {
+  .markdown-body {
+    max-width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #rag-upload-btn {
+    transition: none;
+  }
+}

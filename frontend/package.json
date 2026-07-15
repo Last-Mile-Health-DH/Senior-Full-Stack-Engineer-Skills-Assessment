@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "node tests/run-tests.mjs",
+    "playwright:install": "playwright install",
+    "playwright:report": "playwright show-report",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "next": "16.2.4",
@@ -14,6 +18,7 @@
     "react-dom": "19.2.4"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

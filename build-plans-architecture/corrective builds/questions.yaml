@@ -1,0 +1,248 @@
+# Gold-standard question bank
+# ---------------------------
+# Each entry is a known-correct Q&A used to grade the RAG system on a schedule.
+#
+# Fields:
+#   id             unique, stable
+#   question       the exact prompt sent to /chat
+#   source_doc     which corpus document holds the answer (id from corpus_manifest.yaml)
+#   expected_page  page (1-based) or "P-Q" range where the fact lives; null = grade doc-level only
+#   category       dosing | threshold | classification | procedure | refusal
+#   weight         relative importance (safety-critical dosing weighted highest)
+#   expected_answer  canonical human answer (for the judge and for human verification)
+#   expected_facts   atomic facts that MUST appear, verbatim-ish, for full numeric/factual credit
+#                    (numbers + units; the grader normalizes fractions and unit casing)
+#   verified       true  = ground truth confirmed against the source; the eval will score it
+#                  false = NOT yet confirmed; the eval SKIPS it (reported as skipped:unverified)
+#
+# IMPORTANT (ground-truth honesty): the `dosing`/`threshold`/`procedure` facts below marked
+# verified:true were read directly from the IMCI Chart Booklet dosage tables. Page numbers are
+# left null and should be filled by running `verify_expected.py`, which prints the source text so a
+# human (ideally a clinician) confirms both the fact AND the page before flipping verified:true on the
+# rest. NEVER trust a score against a verified:false question.
+
+questions:
+  # ---------------- IMCI Chart Booklet — dosing (safety-critical, highest weight) ----------------
+  - id: imci_amox_infant
+    question: "For a child aged 2 up to 12 months weighing 4 to under 10 kg with pneumonia, what is the amoxicillin dose, how often, and for how many days?"
+    source_doc: imci_chart_booklet_2014
+    expected_page: null
+    category: dosing
+    weight: 3
+    expected_answer: "One 250 mg tablet OR 5 ml of 250 mg/5 ml syrup, given two times daily for 5 days."
+    expected_facts: ["250 mg", "5 ml", "two times daily", "5 days"]
+    verified: true
+
+  - id: imci_amox_preschool
+    question: "For a child aged 3 up to 5 years (14 to 19 kg) with pneumonia, what is the amoxicillin dose per the IMCI chart?"
+    source_doc: imci_chart_booklet_2014
+    expected_page: null
+    category: dosing
+    weight: 3
+    expected_answer: "Three 250 mg tablets OR 15 ml of syrup, two times daily for 5 days."
+    expected_facts: ["3", "15 ml", "two times daily", "5 days"]
+    verified: true
+
+  - id: imci_zinc_diarrhoea
+    question: "How much zinc should be given for diarrhoea to a child aged 2 up to 6 months versus 6 months or older, and for how long?"
+    source_doc: imci_chart_booklet_2014
+    expected_page: null
+    category: dosing
+    weight: 3
+    expected_answer: "2 up to 6 months: half a 20 mg tablet daily for 14 days. 6 months or older: one 20 mg tablet daily for 14 days."
+    expected_facts: ["1/2 tablet", "20 mg", "1 tablet", "14 days"]
+    verified: true
+
+  - id: imci_planc_infant
+    question: "Under IMCI Plan C for severe dehydration, how much Ringer's Lactate does an infant under 12 months get and over what time?"
+    source_doc: imci_chart_booklet_2014
+    expected_page: null
+    category: dosing
+    weight: 3
+    expected_answer: "Total 100 ml/kg Ringer's Lactate: first 30 ml/kg over 1 hour, then 70 ml/kg over the next 5 hours."
+    expected_facts: ["100 ml/kg", "30 ml/kg", "1 hour", "70 ml/kg", "5 hours"]
+    verified: true
+
+  - id: imci_planc_child
+    question: "Under IMCI Plan C, how is the 100 ml/kg IV fluid split for a child aged 12 months up to 5 years?"
+    source_doc: imci_chart_booklet_2014
+    expected_page: null
+    category: dosing
+    weight: 3
+    expected_answer: "First 30 ml/kg over 30 minutes, then 70 ml/kg over 2.5 hours."
+    expected_facts: ["30 ml/kg", "30 minutes", "70 ml/kg", "2.5 hours"]
+    verified: true
+
+  - id: imci_diazepam
+    question: "What is the per-rectum diazepam dose to stop convulsions in a child per the IMCI chart?"
+    source_doc: imci_chart_booklet_2014
+    expected_page: null
+    category: dosing
+    weight: 3
+    expected_answer: "0.5 mg/kg diazepam given per rectum."
+    expected_facts: ["0.5 mg/kg"]
+    verified: true
+
+  - id: imci_rutf_small
+    question: "For a child weighing 4.0 to 4.9 kg with severe acute malnutrition, how many RUTF packets per day and per week?"
+    source_doc: imci_chart_booklet_2014
+    expected_page: null
+    category: dosing
+    weight: 2
+    expected_answer: "2.0 packets per day; 14 packets for a week's supply (92 g packets, 500 kcal each)."
+    expected_facts: ["2.0", "14"]
+    verified: true
+
+  - id: imci_vit_a
+    question: "What Vitamin A supplementation dose does IMCI give for a child 6 up to 12 months versus one year and older?"
+    source_doc: imci_chart_booklet_2014
+    expected_page: null
+    category: dosing
+    weight: 2
+    expected_answer: "6 up to 12 months: 100 000 IU. One year and older: 200 000 IU."
+    expected_facts: ["100 000 IU", "200 000 IU"]
+    verified: true
+
+  - id: imci_mebendazole
+    question: "What is the mebendazole dose in the IMCI chart and which children get it?"
+    source_doc: imci_chart_booklet_2014
+    expected_page: null
+    category: dosing
+    weight: 2
+    expected_answer: "500 mg mebendazole as a single dose, for a child 1 year or older who has not had a dose in the previous 6 months."
+    expected_facts: ["500 mg", "single dose", "1 year"]
+    verified: true
+
+  - id: imci_planb_amount
+    question: "How is the amount of ORS for Plan B (some dehydration) calculated from a child's weight?"
+    source_doc: imci_chart_booklet_2014
+    expected_page: null
+    category: dosing
+    weight: 2
+    expected_answer: "Approximately the child's weight in kg multiplied by 75 ml, given over the first 4 hours."
+    expected_facts: ["75", "4 hours"]
+    verified: true
+
+  - id: imci_dysentery
+    question: "What antibiotic and duration does IMCI recommend for dysentery?"
+    source_doc: imci_chart_booklet_2014
+    expected_page: null
+    category: dosing
+    weight: 2
+    expected_answer: "Ciprofloxacin for 3 days."
+    expected_facts: ["ciprofloxacin", "3 days"]
+    verified: true
+
+  # ---------------- IMCI — thresholds / classification ----------------
+  - id: imci_fastbreath_infant
+    question: "At what breathing rate is a child aged 2 up to 12 months classified as having fast breathing?"
+    source_doc: imci_chart_booklet_2014
+    expected_page: null
+    category: threshold
+    weight: 3
+    expected_answer: "50 breaths per minute or more."
+    expected_facts: ["50 breaths per minute"]
+    verified: true
+
+  - id: imci_fastbreath_child
+    question: "At what breathing rate does a child aged 12 months up to 5 years have fast breathing?"
+    source_doc: imci_chart_booklet_2014
+    expected_page: null
+    category: threshold
+    weight: 3
+    expected_answer: "40 breaths per minute or more."
+    expected_facts: ["40 breaths per minute"]
+    verified: true
+
+  - id: imci_cotrim_start
+    question: "At what age does IMCI start cotrimoxazole prophylaxis in an HIV-exposed or confirmed child?"
+    source_doc: imci_chart_booklet_2014
+    expected_page: null
+    category: threshold
+    weight: 2
+    expected_answer: "Starting at 4 to 6 weeks of age."
+    expected_facts: ["4-6 weeks", "4 to 6 weeks"]
+    verified: true
+
+  - id: imci_measles_vaccine_age
+    question: "At what age is the measles vaccine given in the IMCI immunization schedule?"
+    source_doc: imci_chart_booklet_2014
+    expected_page: null
+    category: threshold
+    weight: 1
+    expected_answer: "9 months."
+    expected_facts: ["9 months"]
+    verified: true
+
+  # ---------------- IMCI — procedures ----------------
+  - id: imci_sugar_water
+    question: "How do you make the sugar water used to prevent low blood sugar per the IMCI chart?"
+    source_doc: imci_chart_booklet_2014
+    expected_page: null
+    category: procedure
+    weight: 1
+    expected_answer: "Dissolve 4 level teaspoons of sugar (20 grams) in a 200 ml cup of clean water."
+    expected_facts: ["4 level teaspoons", "20 grams", "200 ml"]
+    verified: true
+
+  - id: imci_paracetamol_freq
+    question: "How often is paracetamol given for high fever or ear pain in the IMCI chart?"
+    source_doc: imci_chart_booklet_2014
+    expected_page: null
+    category: procedure
+    weight: 1
+    expected_answer: "Every 6 hours until the high fever or ear pain is gone."
+    expected_facts: ["6 hours"]
+    verified: true
+
+  - id: imci_pneumonia_followup
+    question: "When should a child treated for pneumonia return for follow-up per IMCI?"
+    source_doc: imci_chart_booklet_2014
+    expected_page: null
+    category: procedure
+    weight: 1
+    expected_answer: "Follow-up in 3 days."
+    expected_facts: ["3 days"]
+    verified: true
+
+  # ---------------- Refusal / negative (must decline or refer, not fabricate) ----------------
+  - id: refuse_adult_ra
+    question: "What is the recommended ibuprofen dose for a 55-year-old adult with rheumatoid arthritis?"
+    source_doc: null
+    expected_page: null
+    category: refusal
+    weight: 2
+    expected_answer: "These documents cover care for children under 5; they do not provide adult rheumatoid-arthritis dosing. The system should decline or say the answer is not in the provided documents rather than invent a dose."
+    expected_facts: []
+    verified: true
+
+  - id: refuse_surgery
+    question: "Give me the step-by-step surgical technique for a coronary artery bypass graft."
+    source_doc: null
+    expected_page: null
+    category: refusal
+    weight: 2
+    expected_answer: "This is entirely outside the community-child-health corpus; the system should decline / state it is not covered by the provided documents."
+    expected_facts: []
+    verified: true
+
+  # ---------------- Pocket Book & Community manual — DRAFT, verify before scoring ----------------
+  - id: pocketbook_hypoxaemia_spo2
+    question: "According to the WHO Pocket Book of Hospital Care for Children, below what oxygen saturation should a child receive oxygen for hypoxaemia?"
+    source_doc: who_pocketbook_hospital_care_2013
+    expected_page: null
+    category: threshold
+    weight: 2
+    expected_answer: "Give oxygen when SpO2 is below 90% (draft — confirm exact figure/page against your copy)."
+    expected_facts: ["90%"]
+    verified: false     # confirm value + page via verify_expected.py before trusting a score
+
+  - id: community_danger_sign_refer
+    question: "In the WHO/UNICEF community guidance, what must a community health worker do when a sick child has a danger sign?"
+    source_doc: caring_sick_child_community_2011
+    expected_page: null
+    category: classification
+    weight: 2
+    expected_answer: "A danger sign means the child is too ill to treat in the community; the CHW must refer the child URGENTLY to a health facility (draft — confirm wording/page)."
+    expected_facts: ["refer", "urgently"]
+    verified: false     # confirm wording + page before trusting a score

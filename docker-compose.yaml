@@ -1,30 +1,86 @@
 services:
   backend:
-      build:
-        context: ./backend
-        dockerfile: Dockerfile
-      restart: always
-      ports:
-        - "6100:6100"
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+asyncpg://postgres:postgres@relational_db:5432/postgres}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      VOYAGE_API_KEY: ${VOYAGE_API_KEY:-}
+      # Model routing. These MUST be listed here: compose passes an explicit allow-list, so a
+      # variable set in .env but missing from this block silently falls back to the default in
+      # settings.py — the container would keep using Claude/OpenAI while .env said Gemini.
+      # "auto": route each task to the cheapest configured provider (core/model_router.py).
+      # "manual": honor the pinned model names below exactly.
+      MODEL_ROUTING: ${MODEL_ROUTING:-auto}
+      GENERATION_MODEL_PRIMARY: ${GENERATION_MODEL_PRIMARY:-claude-sonnet-5}
+      GENERATION_MODEL_FAST: ${GENERATION_MODEL_FAST:-claude-haiku-4-5}
+      # Pinned to Anthropic Opus by policy (reproducible grader). Not cost-routed.
+      JUDGE_MODEL: ${JUDGE_MODEL:-claude-opus-4-8}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-text-embedding-3-small}
+      EMBEDDING_DIM: ${EMBEDDING_DIM:-1536}
+      MODEL_PRICING_JSON: ${MODEL_PRICING_JSON:-}
+      JWT_SECRET: ${JWT_SECRET:-dev-only-change-me}
+      CHAINLIT_AUTH_SECRET: ${CHAINLIT_AUTH_SECRET:-}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:8000}
+      # Upload policy. These are cost/latency guards, not architectural bounds. The
+      # gold-standard corpus includes the WHO Pocket Book (~438 pages), which the previous
+      # 300-page limit rejected outright.
+      MAX_PDF_PAGES: ${MAX_PDF_PAGES:-700}
+      MAX_PDF_SIZE_MB: ${MAX_PDF_SIZE_MB:-65}
+      # Must exceed MAX_PDF_SIZE_MB plus multipart overhead. If it does not, the input
+      # middleware rejects a legal upload before the size check can explain why.
+      REQUEST_BODY_SIZE_LIMIT_BYTES: ${REQUEST_BODY_SIZE_LIMIT_BYTES:-75497472}
+      UPLOAD_STORAGE_BACKEND: ${UPLOAD_STORAGE_BACKEND:-local}
+      PAGE_IMAGE_STORAGE_BACKEND: ${PAGE_IMAGE_STORAGE_BACKEND:-local}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME:-}
+      S3_DOCUMENT_BUCKET: ${S3_DOCUMENT_BUCKET:-}
+      S3_PAGE_IMAGE_BUCKET: ${S3_PAGE_IMAGE_BUCKET:-}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      ENABLE_SCHEDULED_JOBS: ${ENABLE_SCHEDULED_JOBS:-true}
+    restart: always
+    depends_on:
+      relational_db:
+        condition: service_healthy
+    ports:
+      - "6100:6100"
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:6100/health', timeout=5).read()\""]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
   frontend:
-      build:
-        context: ./frontend
-        dockerfile: Dockerfile
-      command: npm start
-      restart: always
-      environment:
-        - BACKEND_URL=http://backend:6100
-      ports:
-        - "3000:3000"
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    command: npm start
+    restart: always
+    environment:
+      - BACKEND_URL=http://backend:6100
+    depends_on:
+      backend:
+        condition: service_started
+    ports:
+      - "3000:3000"
 
   chainlit:
-      build:
-        context: ./chainlit_app
-        dockerfile: Dockerfile
-      restart: always
-      ports:
-        - "8000:8000"
+    build:
+      context: ./chainlit_app
+      dockerfile: Dockerfile
+    environment:
+      BACKEND_URL: ${BACKEND_URL:-http://backend:6100}
+      CHAINLIT_BACKEND_AUTH_TOKEN: ${CHAINLIT_BACKEND_AUTH_TOKEN:-}
+      CHAINLIT_BACKEND_TIMEOUT_SECONDS: ${CHAINLIT_BACKEND_TIMEOUT_SECONDS:-30}
+      CHAINLIT_AUTH_SECRET: ${CHAINLIT_AUTH_SECRET:-}
+    restart: always
+    depends_on:
+      backend:
+        condition: service_started
+    ports:
+      - "8000:8000"
   
   relational_db:
     image: pgvector/pgvector:pg16
@@ -37,6 +93,11 @@ services:
       - db_volume:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   db_volume:

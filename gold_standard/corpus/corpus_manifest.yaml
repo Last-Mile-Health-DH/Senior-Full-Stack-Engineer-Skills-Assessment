@@ -1,0 +1,61 @@
+# Gold-evaluation corpus — compact, deterministic, generated.
+# ------------------------------------------------------------
+# This is the DEFAULT gold corpus. It is built (not downloaded) by build_compact_corpus.py and
+# is intentionally tiny so the whole gold eval — ingest + retrieve + generate + grade — runs
+# end-to-end within a free-tier hosted embedding quota and in a couple of minutes.
+#
+# Each document is chosen to force a DIFFERENT branch of the ingestion pipeline, so the eval
+# proves the system processes each PDF type correctly, not just one:
+#
+#   dosing_tables       ruled tables, native text   -> structure-aware chunking (table) + page image
+#   referral_guidance   flowing prose, no structure -> fixed-size chunking with overlap
+#   treatment_protocol  numbered heading hierarchy  -> structure-aware chunking (hierarchy)
+#   scanned_dosing_card image only, no text layer   -> OCR fallback extraction
+#
+# All four are well within the app limits (65 MB / 700 pages). Content is authored in the
+# generator, so every gold answer is grounded by construction. The authentic ~659-page WHO
+# corpus is preserved in corpus_manifest.who.yaml (+ questions.who.yaml) for anyone who wants to
+# run against the originals; be aware it needs a paid or fresh-project embedding key to finish.
+#
+# Build:  pip install reportlab pillow  &&  python -m gold_standard.corpus.build_compact_corpus
+# (equivalently: python -m gold_standard.fetch_corpus, which builds generated docs and verifies
+#  their pinned SHA-256.)
+
+corpus_version: 2.0.0-compact
+documents:
+- id: dosing_tables
+  title: Paediatric Dosing Reference (Outpatient)
+  doc_type: structured_tables
+  pipeline_branch: structure-aware chunking (table) + table-page rasterization
+  filename: dosing_tables.pdf
+  source: generated
+  generator: build_compact_corpus.py
+  license: generated for this assessment; clinical values follow the WHO IMCI framework
+  sha256: 83283cd8f175e52dd0a62da971fca34a1b027a61207a39ea50ff957e1d474f59
+- id: referral_guidance
+  title: Recognising a Sick Child Who Needs Referral
+  doc_type: unstructured_prose
+  pipeline_branch: fixed-size chunking with 15% overlap
+  filename: referral_guidance.pdf
+  source: generated
+  generator: build_compact_corpus.py
+  license: generated for this assessment; clinical values follow the WHO IMCI framework
+  sha256: a826d968c7b700423a1cbbdd3787e1ab89f2a580e590314f9588c4d2b2992753
+- id: treatment_protocol
+  title: 'Outpatient Management Protocol: Cough or Difficult Breathing'
+  doc_type: structured_hierarchy
+  pipeline_branch: structure-aware chunking (heading hierarchy)
+  filename: treatment_protocol.pdf
+  source: generated
+  generator: build_compact_corpus.py
+  license: generated for this assessment; clinical values follow the WHO IMCI framework
+  sha256: 51b44fb89bbcda95c923e3039536353f1a3599d9b0520846e77c0d84f2996998
+- id: scanned_dosing_card
+  title: Quick Reference Card — Oral Rehydration and Vitamin A (scanned)
+  doc_type: scanned_image
+  pipeline_branch: OCR fallback extraction (no text layer)
+  filename: scanned_dosing_card.pdf
+  source: generated
+  generator: build_compact_corpus.py
+  license: generated for this assessment; clinical values follow the WHO IMCI framework
+  sha256: e9e3ca5c3e76cc7b327f52bd0b5ae2e8d9509dd83ce71c489ea8f1687585b557

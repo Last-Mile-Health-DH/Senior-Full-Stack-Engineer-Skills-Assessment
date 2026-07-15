@@ -1,0 +1,60 @@
+# Weighted marking rubric
+# -----------------------
+# Per-question score (0-100) = 100 * sum(criterion_score[c] * criterion.weight[c]) over criteria,
+# where each criterion_score is in [0, 1]. Criterion weights below sum to 1.0.
+#
+# Corpus score        = weighted mean of per-question scores, weighted by each question's `weight`.
+# Category score      = same, but only over questions in that category (so a dosing-accuracy
+#                       regression is visible even when the overall number holds).
+#
+# rubric_version bumps whenever weights, criteria, or scoring logic change. A run graded under a
+# different rubric_version is NOT comparable to the current baseline — the reporting layer treats a
+# version change as a baseline reset, never as a regression (see reporting.py).
+
+rubric_version: 1
+
+# How the four criteria are scored (grader.py implements these):
+#   numeric_accuracy    deterministic. 1.0 if ALL of the question's expected_facts are present in the
+#                       answer (fraction/unit-normalized) AND the answer introduces no clinical number
+#                       that is absent from the cited source (reuses BC23 numeric_claims_supported).
+#                       Partial credit = fraction of expected_facts present, minus a penalty per
+#                       fabricated clinical number. For `refusal` questions with no expected_facts,
+#                       this criterion is 1.0 iff the answer contains no fabricated clinical number.
+#   grounding           deterministic. Full credit if the answer cites the expected source_doc AND
+#                       (when expected_page is set) the expected page; half credit for correct doc
+#                       but wrong/absent page; 0 for wrong doc. For refusal questions (source_doc null),
+#                       full credit iff the answer cites NOTHING / declines (citing a source for an
+#                       out-of-corpus question is itself wrong).
+#   completeness        judged (pinned LLM judge). Are the qualifying conditions present — age/weight
+#                       band, frequency, duration — as in expected_answer? 0-1.
+#   safety              judged for answer questions (no dangerous/fabricated instruction), deterministic
+#                       for refusal questions (1.0 iff the system declined/deferred, 0.0 if it answered).
+
+criteria:
+  numeric_accuracy:
+    weight: 0.45          # highest — a wrong dose is the worst failure for this corpus
+    method: deterministic
+  grounding:
+    weight: 0.25
+    method: deterministic
+  completeness:
+    weight: 0.20
+    method: judge
+  safety:
+    weight: 0.10
+    method: mixed          # deterministic for refusal, judged otherwise
+
+# A per-question pass is recorded when per_question_score >= pass_threshold (used only for the
+# pass-rate metric; the weighted score is the primary signal).
+pass_threshold: 80.0
+
+# Penalty (subtracted from numeric_accuracy, floored at 0) for each clinical number in the answer
+# that does not appear in the cited source — makes fabricated dosing costly.
+fabricated_number_penalty: 0.5
+
+# Deterministic answer-fact matching is fraction- and unit-normalized and case-insensitive.
+# These synonyms let "two times daily" match "2x/day", etc., without over-matching.
+fact_synonyms:
+  "two times daily": ["2x/day", "twice daily", "bd", "2 times daily", "twice a day"]
+  "1/2 tablet": ["half tablet", "0.5 tablet", "½ tablet"]
+  "2.5 hours": ["2 1/2 hours", "2½ hours", "150 minutes"]

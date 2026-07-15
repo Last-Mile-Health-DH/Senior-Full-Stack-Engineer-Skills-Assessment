@@ -1,0 +1,16 @@
+**
+!backend/
+!backend/**
+!gold_standard/
+!gold_standard/**
+!pytest.ini
+
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+gold_standard/corpus/files/
+gold_standard/gold_eval_report.md

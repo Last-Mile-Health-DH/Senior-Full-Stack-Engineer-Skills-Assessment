@@ -1,0 +1,3 @@
+# Run from the repository root after loading the same environment used by the backend.
+# This is an alternative to ENABLE_SCHEDULED_JOBS=true and the in-process singleton scheduler.
+0 3 * * * cd /srv/assessment && python -m gold_standard.runner --trigger scheduled >> /var/log/gold-eval.log 2>&1

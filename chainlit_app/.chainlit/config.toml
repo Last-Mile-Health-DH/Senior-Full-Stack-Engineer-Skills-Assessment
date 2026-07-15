@@ -1,0 +1,46 @@
+[project]
+enable_telemetry = false
+user_env = []
+session_timeout = 3600
+user_session_timeout = 1296000
+cache = false
+allow_origins = ["*"]
+
+[features]
+unsafe_allow_html = false
+latex = false
+user_message_autoscroll = true
+auto_tag_thread = true
+edit_message = true
+
+[features.spontaneous_file_upload]
+enabled = false
+accept = ["application/pdf"]
+max_files = 1
+max_size_mb = 20
+
+[features.audio]
+sample_rate = 24000
+
+[features.mcp.sse]
+enabled = false
+
+[features.mcp.stdio]
+enabled = false
+allowed_executables = ["npx", "uvx"]
+
+[UI]
+name = "Ask your documents"
+default_theme = "light"
+layout = "wide"
+default_sidebar_state = "open"
+description = "Ask questions about the documents you upload, with sources on every answer."
+cot = "hidden"
+custom_css = "/public/rag-theme.css"
+# Mounts the "+" button inside the composer, at its bottom-left corner, matching the
+# Next.js chat surface. It anchors to Chainlit's stable `message-composer` element id
+# rather than to generated class names.
+custom_js = "/public/rag-composer-upload.js"
+
+[meta]
+generated_by = "2.5.5"

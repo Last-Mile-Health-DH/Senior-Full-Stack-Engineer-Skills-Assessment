@@ -1,0 +1,10 @@
+[Unit]
+Description=Assessment gold-standard evaluation
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/srv/assessment
+EnvironmentFile=/srv/assessment/.env
+ExecStart=/usr/local/bin/python -m gold_standard.runner --trigger scheduled

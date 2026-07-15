@@ -1,0 +1,59 @@
+# Gold-standard corpus manifest
+# ------------------------------
+# Three authoritative, freely-downloadable, table/chart-rich WHO/UNICEF community-health
+# protocol PDFs, spanning the community -> outpatient -> referral tiers a Last Mile Health
+# RAG deployment actually serves. Each is dense with dosage tables, classification charts,
+# and decision trees, which is exactly what the architecture's structure-detection and
+# page-image path are built to handle, and each yields unambiguous numeric gold answers.
+#
+# Integrity model: TRUST-ON-FIRST-USE (TOFU).
+#   - `sha256` below is left null on first checkout.
+#   - `fetch_corpus.py` downloads each file, computes its SHA-256, and (if `sha256` is null)
+#     PINS it back into this file. On every later run it VERIFIES against the pinned value.
+#   - This makes grading reproducible without bundling copyrighted PDFs into the repo, and
+#     detects a source silently reissuing a file (which would otherwise move your gold answers).
+#
+# corpus_version bumps whenever the set of documents or their pinned checksums changes;
+# gold_eval baselines from a different corpus_version are treated as a baseline reset.
+
+corpus_version: "1.0.0"
+
+documents:
+  - id: imci_chart_booklet_2014
+    title: "WHO Integrated Management of Childhood Illness (IMCI) Chart Booklet"
+    year: 2014
+    tier: outpatient_facility
+    publisher: "World Health Organization"
+    filename: imci_chart_booklet_2014.pdf
+    # Canonical WHO CDN URL (verified downloadable).
+    url: "https://cdn.who.int/media/docs/default-source/mca-documents/child/imci-integrated-management-of-childhood-illness/imci-in-service-training/imci-chart-booklet.pdf?sfvrsn=f63af425_1"
+    landing_page: "https://www.who.int/publications/m/item/integrated-management-of-childhood-illness---chart-booklet-(march-2014)"
+    license: "© WHO 2014 — non-commercial use permitted; see WHO licensing"
+    sha256: null           # pinned on first fetch (TOFU)
+
+  - id: who_pocketbook_hospital_care_2013
+    title: "WHO Pocket Book of Hospital Care for Children (2nd edition)"
+    year: 2013
+    tier: referral_inpatient
+    publisher: "World Health Organization"
+    filename: who_pocketbook_hospital_care_2013.pdf
+    # Canonical: WHO IRIS handle 10665/81170. IRIS blocks some automated clients; if the
+    # primary bitstream URL 429s an unattended fetch, use the verified mirror below or
+    # download once in a browser and drop the file into corpus/files/ (checksum still verifies).
+    url: "https://iris.who.int/bitstream/handle/10665/81170/9789241548373_eng.pdf"
+    mirror_url: "https://www.kenyapaediatric.org/wp-content/uploads/2020/08/WHO-pocket-book-of-hospital-care-for-children-2nd-edition_2013.pdf"
+    landing_page: "https://iris.who.int/handle/10665/81170"
+    license: "© WHO 2013 — non-commercial use permitted; see WHO licensing"
+    sha256: null
+
+  - id: caring_sick_child_community_2011
+    title: "WHO/UNICEF Caring for the Sick Child in the Community (Participant Manual)"
+    year: 2011
+    tier: community_health_worker
+    publisher: "World Health Organization / UNICEF"
+    filename: caring_sick_child_community_2011.pdf
+    # Verified direct PDF (GiveWell-hosted copy of the WHO/UNICEF participant manual).
+    url: "https://files.givewell.org/files/DWDA%202009/Interventions/ORS/WHO_and_UNICEF_Caring_for_the_sick_child_in_the_community-_Participants_manual_2011.pdf"
+    landing_page: "https://www.who.int/teams/maternal-newborn-child-adolescent-health-and-ageing/child-health/integrated-management-of-childhood-illness"
+    license: "© WHO/UNICEF 2011 — non-commercial use permitted; see WHO licensing"
+    sha256: null

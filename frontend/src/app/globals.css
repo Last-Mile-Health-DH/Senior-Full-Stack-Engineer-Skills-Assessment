@@ -1,52 +1,882 @@
+:root {
+  --ink: #18212f;
+  --ink-muted: #536173;
+  --line: #d8dee8;
+  --line-strong: #cbd7e3;
+  --surface: #ffffff;
+  --canvas: #eef2f5;
+  --accent: #1f6f5b;
+  --accent-dark: #185545;
+  --cite: #a3132a;
+  --focus: #1d4ed8;
+  --sidebar-width: 288px;
+  --topbar-height: 56px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
 html {
-  font-size: 18px; /* Increase base font size */
+  font-size: 16px;
 }
 
 body {
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  color: var(--ink);
+  background: var(--canvas);
+  font-family: system-ui, -apple-system, "Segoe UI", Arial, Helvetica, sans-serif;
+  line-height: 1.55;
 }
 
-/* Generic styles for FastAPI HTML output */
-body, .fastapi-html {
-  color: #222;
-  background: none;
-}
-h1 {
-  font-size: 2rem;
-  margin-bottom: 1rem;
-  color: #1e293b;
-  font-weight: 700;
-}
-p {
-  margin-bottom: 1.5rem;
-  color: #334155;
-}
-ul {
-  padding-left: 1.5rem;
-  margin-bottom: 1.5rem;
-}
-li {
-  margin-bottom: 0.5rem;
-  color: #475569;
-  font-size: 1.1rem;
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 6px;
 }
 
-/* Home page layout styles */
-.home-bg {
+/* ---------------------------------------------------------------- app shell */
+
+.app-shell {
+  display: grid;
+  grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
   min-height: 100vh;
+}
+
+.app-topbar {
+  display: none;
+}
+
+.app-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  padding: 28px 22px;
+  border-right: 1px solid var(--line);
+  background: var(--surface);
+  overflow-y: auto;
+}
+
+.app-kicker {
+  margin: 0 0 8px;
+  color: var(--cite);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.sidebar-brand h1 {
+  margin: 0 0 10px;
+  font-size: 1.4rem;
+  line-height: 1.2;
+}
+
+.sidebar-blurb {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 0.9rem;
+}
+
+.sidebar-nav ul {
+  margin: 0 0 20px;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 4px;
+}
+
+.nav-heading {
+  margin: 0 0 8px;
+  color: var(--ink-muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.nav-link {
   display: flex;
   align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #e0e7ff 0%, #f0fdfa 100%);
-  padding: 2rem;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--ink);
+  font-size: 0.94rem;
+  font-weight: 600;
+  text-decoration: none;
 }
 
-.home-card {
-  background: white;
-  border-radius: 1rem;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-  padding: 2.5rem 2rem;
-  max-width: 700px;
+.nav-link:hover {
+  background: #f1f5f9;
+  border-color: var(--line);
+}
+
+/* The current page is the one visual anchor a reviewer looks for. */
+.nav-link.is-active {
+  border-color: #bcd9cf;
+  background: #edf8f3;
+  color: var(--accent-dark);
+  box-shadow: inset 3px 0 0 var(--accent);
+}
+
+.nav-link.is-external {
+  color: var(--ink-muted);
+  font-weight: 500;
+}
+
+.sidebar-note {
+  margin: auto 0 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: 6px;
+  background: #f8fafc;
+  color: var(--ink-muted);
+  font-size: 0.8rem;
+}
+
+.app-main {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+/* ---------------------------------------------------------- hamburger menu */
+
+.menu-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.menu-toggle:hover {
+  background: #f1f5f9;
+}
+
+.menu-icon {
+  display: grid;
+  gap: 3px;
+  width: 18px;
+}
+
+.menu-icon span {
+  display: block;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--ink);
+}
+
+.menu-scrim {
+  display: none;
+}
+
+/* ------------------------------------------------------------------- chat */
+
+/* Flex, not grid: the notice row is conditional, and fixed grid rows would leave the
+   transcript in an `auto` track (and stop it flexing) whenever the notice is absent. */
+.chat-surface {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+  height: 100vh;
+  padding: 24px;
+}
+
+/* Shown when no model key is configured: the answer was extracted, not written. */
+.model-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0;
+  padding: 10px 14px;
+  border: 1px solid #e2c88a;
+  border-left: 4px solid #b36b00;
+  border-radius: 8px;
+  background: #fdf6e6;
+  color: #6b4a00;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.chat-transcript {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 14px;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 4px;
+}
+
+.chat-welcome {
+  max-width: 640px;
+  margin: auto;
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  text-align: center;
+}
+
+.chat-welcome h2 {
+  margin: 0 0 8px;
+  font-size: 1.2rem;
+}
+
+.chat-welcome p {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 0.95rem;
+}
+
+.chat-message {
+  max-width: min(72ch, 100%);
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.message-user {
+  align-self: flex-end;
+  border-color: #bdd8cf;
+  background: #f1faf6;
+}
+
+.message-assistant {
+  align-self: flex-start;
+}
+
+.message-label {
+  margin: 0 0 8px;
+  color: var(--ink-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.message-body {
+  margin: 0;
+  font-size: 0.96rem;
+  overflow-wrap: anywhere;
+}
+
+.message-body p {
+  margin: 0 0 10px;
+}
+
+.message-body p:last-child,
+.message-body ul:last-child {
+  margin-bottom: 0;
+}
+
+.message-body ul {
+  margin: 0 0 10px;
+  padding-left: 20px;
+}
+
+.message-body li {
+  margin-bottom: 4px;
+}
+
+.message-body.is-error {
+  color: #9b1c31;
+}
+
+.citation-marker {
+  margin-left: 1px;
+  font-size: 0.68em;
+  font-weight: 700;
+  line-height: 0;
+}
+
+.citation-marker a {
+  color: var(--cite);
+  text-decoration: none;
+}
+
+.citation-marker a:hover {
+  text-decoration: underline;
+}
+
+.citation-marker a + a::before {
+  content: ",";
+}
+
+.reference-block {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.reference-block h3 {
+  margin: 0 0 6px;
+  color: var(--ink-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.reference-block ol {
+  margin: 0;
+  padding-left: 20px;
+  color: var(--ink-muted);
+  font-size: 0.85rem;
+}
+
+/* --------------------------------------------------------- loading state */
+
+.is-thinking {
+  border-style: dashed;
+}
+
+.thinking-body {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 0.92rem;
+}
+
+.thinking-dots {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.thinking-dots span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: thinking-pulse 1.2s ease-in-out infinite;
+}
+
+.thinking-dots span:nth-child(2) {
+  animation-delay: 0.18s;
+}
+
+.thinking-dots span:nth-child(3) {
+  animation-delay: 0.36s;
+}
+
+@keyframes thinking-pulse {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thinking-dots span {
+    animation: none;
+    opacity: 0.6;
+  }
+}
+
+/* ---------------------------------------------------------------- composer */
+
+.prompt-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.prompt-row button {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  color: #2f3a46;
+  font: inherit;
+  font-size: 0.86rem;
+  cursor: pointer;
+}
+
+.prompt-row button:hover:not(:disabled) {
+  background: #f1f5f9;
+}
+
+.prompt-row button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* The composer is a single framed surface. The textarea has no border of its own, and the
+   controls sit inside the frame along its bottom edge. */
+.chat-composer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 10px 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  background: var(--surface);
+}
+
+.chat-composer:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(31, 111, 91, 0.12);
+}
+
+.composer-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+/* Bottom-left, inside the input frame, at every breakpoint. */
+.composer-upload {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  background: #f8fafc;
+  color: var(--accent-dark);
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.composer-upload:hover {
+  border-color: var(--accent);
+  background: #edf8f3;
+}
+
+.chat-composer label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+/* Borderless: the composer frame itself is the input surface. */
+.chat-composer textarea {
   width: 100%;
+  min-height: 48px;
+  max-height: 180px;
+  resize: none;
+  padding: 6px 6px 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
 }
 
+.chat-composer button {
+  min-width: 96px;
+  min-height: 44px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--accent);
+  color: #ffffff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.chat-composer button:hover:not(:disabled) {
+  background: var(--accent-dark);
+}
+
+.chat-composer button:disabled {
+  background: #9aa8ba;
+  cursor: not-allowed;
+}
+
+/* --------------------------------------------------------------- documents */
+
+.documents-shell {
+  padding: 28px;
+}
+
+.documents-header {
+  max-width: 1040px;
+  margin: 0 auto 20px;
+}
+
+/* The route back to chat, visible at every viewport rather than only in the sidebar. */
+.back-to-chat {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  margin-bottom: 14px;
+  padding: 0 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--accent-dark);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.back-to-chat:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft, #edf8f3);
+}
+
+.documents-header h1 {
+  margin: 0 0 6px;
+  font-size: 1.6rem;
+}
+
+.documents-header p {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 0.95rem;
+}
+
+.documents-dropzone {
+  display: grid;
+  gap: 8px;
+  place-items: center;
+  max-width: 1040px;
+  min-height: 150px;
+  margin: 0 auto 18px;
+  border: 2px dashed #9aa8ba;
+  border-radius: 10px;
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.documents-dropzone:hover,
+.documents-dropzone.is-active {
+  border-color: var(--accent);
+  background: #f5fbf8;
+}
+
+.documents-dropzone:focus-within {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.documents-dropzone input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.documents-dropzone span {
+  font-weight: 700;
+}
+
+.documents-dropzone small {
+  color: var(--ink-muted);
+}
+
+.upload-progress {
+  position: relative;
+  max-width: 1040px;
+  height: 28px;
+  margin: 0 auto 14px;
+  overflow: hidden;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  background: var(--surface);
+}
+
+.upload-progress span {
+  display: block;
+  height: 100%;
+  background: #2f7d67;
+}
+
+.upload-progress strong {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 0.84rem;
+}
+
+.documents-error {
+  max-width: 1040px;
+  margin: 0 auto 14px;
+  color: var(--cite);
+  font-size: 0.95rem;
+}
+
+/* Elegant, auto-dismissing upload notification. Fixed to the viewport corner so it is visible
+   at every breakpoint without shifting the page layout. */
+.upload-toast {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 50;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  max-width: min(92vw, 420px);
+  padding: 14px 16px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  font-size: 0.95rem;
+  line-height: 1.4;
+  color: #fff;
+  animation: toast-in 180ms ease-out;
+}
+
+.upload-toast-error {
+  background: #b3261e;
+}
+
+.upload-toast-info {
+  background: #1f6f43;
+}
+
+.upload-toast button {
+  flex: none;
+  margin: -4px -4px -4px 0;
+  padding: 0 6px;
+  background: transparent;
+  border: none;
+  color: inherit;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.85;
+}
+
+.upload-toast button:hover {
+  opacity: 1;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .upload-toast {
+    animation: none;
+  }
+}
+
+.documents-table-band {
+  max-width: 1040px;
+  margin: 0 auto;
+  overflow-x: auto;
+}
+
+.documents-empty {
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.documents-empty h2 {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+}
+
+.documents-empty p {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 0.95rem;
+}
+
+.documents-table {
+  width: 100%;
+  min-width: 620px;
+  border-collapse: collapse;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.documents-table th,
+.documents-table td {
+  padding: 12px;
+  border-bottom: 1px solid #e6ebf1;
+  text-align: left;
+  font-size: 0.92rem;
+}
+
+.documents-table th {
+  color: var(--ink-muted);
+  font-weight: 700;
+  background: #f3f5f8;
+}
+
+.documents-table button {
+  min-width: 72px;
+  padding: 7px 10px;
+  border: 1px solid #b9c3d0;
+  border-radius: 6px;
+  background: var(--surface);
+  font: inherit;
+  cursor: pointer;
+}
+
+.documents-table button:hover {
+  background: #fff1f3;
+  border-color: var(--cite);
+  color: var(--cite);
+}
+
+.documents-table .is-failed td {
+  background: #fff7f8;
+}
+
+.status-pill {
+  display: inline-grid;
+  place-items: center;
+  min-width: 82px;
+  min-height: 26px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.status-processing {
+  background: #eef4ff;
+  color: #264e89;
+}
+
+.status-indexed {
+  background: #edf8f3;
+  color: #28634f;
+}
+
+.status-failed {
+  background: #ffe8ec;
+  color: #9b1c31;
+}
+
+/* ------------------------------------------------- tablet and mobile shell */
+
+@media (max-width: 1024px) {
+  .app-shell {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: var(--topbar-height) minmax(0, 1fr);
+  }
+
+  .app-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    height: var(--topbar-height);
+    padding: 0 14px;
+    border-bottom: 1px solid var(--line);
+    background: var(--surface);
+  }
+
+  .app-topbar-title {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 700;
+  }
+
+  /* The sidebar becomes an overlay drawer. It must never cover the composer while
+     closed, so it is translated fully off-canvas rather than merely hidden. */
+  .app-sidebar {
+    position: fixed;
+    top: var(--topbar-height);
+    bottom: 0;
+    left: 0;
+    z-index: 25;
+    width: min(320px, 86vw);
+    border-right: 1px solid var(--line);
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.16);
+    transform: translateX(-102%);
+    transition: transform 160ms ease-out;
+    visibility: hidden;
+  }
+
+  .app-sidebar.is-open {
+    transform: translateX(0);
+    visibility: visible;
+  }
+
+  .menu-scrim {
+    position: fixed;
+    inset: var(--topbar-height) 0 0;
+    z-index: 20;
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: rgba(15, 23, 42, 0.38);
+    cursor: pointer;
+  }
+
+  .chat-surface {
+    height: calc(100vh - var(--topbar-height));
+    padding: 16px;
+  }
+
+  .documents-shell {
+    padding: 20px 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-sidebar {
+    transition: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .chat-surface {
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .chat-message {
+    max-width: 100%;
+  }
+
+  /* The composer keeps the same shape at 375px: input on top, "+" bottom-left and Send
+     bottom-right inside the same frame. Nothing overlaps or wraps. */
+  .chat-composer button[type="submit"] {
+    min-width: 84px;
+  }
+
+  .menu-toggle-text {
+    display: none;
+  }
+}

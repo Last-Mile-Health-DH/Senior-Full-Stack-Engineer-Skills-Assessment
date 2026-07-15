@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
+import AppShell from "../components/AppShell";
 import "./globals.css";
 
-
-
 export const metadata: Metadata = {
-  title: "Senior Full-Stack Engineer, AI & Digital Health",
-  description: "Practice interview for senior full-stack engineer role at Last Mile Health.",
+  title: "Last Mile Health RAG Platform",
+  description: "PDF ingestion, grounded chat, and gold-standard evaluation console.",
 };
 
 export default function RootLayout({
@@ -15,14 +14,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <head>
-        
-      </head>
-      <body
-        className="flex min-h-screen flex-col items-center justify-between p-24"
-      >
-        {children}
-
+      <body>
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );

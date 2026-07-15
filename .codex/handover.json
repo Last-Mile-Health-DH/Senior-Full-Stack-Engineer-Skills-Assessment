@@ -1,0 +1,341 @@
+[
+  {
+    "from_agent": "backend-engineer",
+    "to_agent": "test-engineer",
+    "cycle_id": "BC2",
+    "status": "implemented",
+    "files_modified": [
+      "backend/alembic.ini",
+      "backend/alembic/env.py",
+      "backend/alembic/script.py.mako",
+      "backend/alembic/versions/0001_enable_pg_extensions.py",
+      "backend/alembic/versions/0002_create_documents.py",
+      "backend/alembic/versions/0003_create_chunks.py",
+      "backend/alembic/versions/0004_create_page_images.py",
+      "backend/alembic/versions/0005_create_chat_tables.py",
+      "backend/alembic/versions/0006_create_exact_cache.py",
+      "backend/alembic/versions/0007_create_semantic_cache.py",
+      "backend/alembic/versions/0008_create_query_audit_log.py",
+      "backend/alembic/versions/0009_create_agent_trace_log.py",
+      "backend/alembic/versions/0010_create_response_grade_and_agentops_summary.py",
+      "backend/alembic/versions/0011_create_anomaly_flag.py",
+      "backend/app/models.py",
+      "backend/requirements.txt"
+    ],
+    "implementation_summary": "Initialized Alembic and implemented the full ARCHITECTURE.md section 6 relational schema with pgvector/pgcrypto extensions, generated content_tsv, HNSW and GIN indexes, cascade constraints, cache/audit/trace/grading tables, agentops_summary view, and anomaly_flag monitoring table.",
+    "divergences_logged": "None. Implementation follows ARCHITECTURE.md section 6.",
+    "verification_requirements": "Verify Alembic upgrade/downgrade and database-level uniqueness, generated column, idempotency, view, and cascade-delete behavior."
+  },
+  {
+    "from_agent": "test-engineer",
+    "to_agent": "gitpr-agent",
+    "cycle_id": "BC2",
+    "status": "verified",
+    "files_modified": [
+      "backend/app/tests/test_migrations.py",
+      "backend/app/tests/test_schema_constraints.py",
+      "tests-README.md"
+    ],
+    "test_commands_executed": [
+      "docker compose -p assessment exec backend pytest"
+    ],
+    "test_results_summary": "Final run collected 19 tests: 7 passed and 12 skipped in 2.56s.",
+    "coverage_results": "BC2 migration and schema constraints covered by integration tests; coverage percentage was not requested for this cycle."
+  },
+  {
+    "from_agent": "backend-engineer",
+    "to_agent": "test-engineer",
+    "cycle_id": "BC4",
+    "status": "implemented",
+    "files_modified": [
+      "backend/app/worker.py",
+      "backend/app/documents/processing.py",
+      "backend/app/tests/test_rasterization.py"
+    ],
+    "implementation_summary": "Instrumented the document worker, fixed upload path and padded CHAR hash resolution, and wired the worker through structure detection, rasterization, chunk preparation, and explicit indexed/failed status updates.",
+    "divergences_logged": "None. Implementation follows ARCHITECTURE (4).md sections 4.3 and 15.2.",
+    "verification_requirements": "Run docker compose -p assessment exec backend pytest app/tests/test_rasterization.py -vv -s."
+  },
+  {
+    "from_agent": "test-engineer",
+    "to_agent": "gitpr-agent",
+    "cycle_id": "BC4",
+    "status": "verified",
+    "files_modified": [
+      "backend/app/tests/test_rasterization.py",
+      "tests-README.md"
+    ],
+    "test_commands_executed": [
+      "docker compose -p assessment exec backend pytest app/tests/test_rasterization.py -vv -s"
+    ],
+    "test_results_summary": "BC4 targeted run passed: 1 passed in 2.79s.",
+    "coverage_results": "Worker transition, page image persistence, and indexed status covered by integration-style test with mocked parser/rasterizer/embedding provider."
+  },
+  {
+    "from_agent": "ml-engineer",
+    "to_agent": "test-engineer",
+    "cycle_id": "BC5",
+    "status": "implemented",
+    "files_modified": [
+      "backend/app/documents/chunking.py",
+      "backend/app/worker.py"
+    ],
+    "implementation_summary": "Added structure-aware chunking, heading context injection, table-preserving chunk boundaries, OpenAI/Voyage embedding clients, deterministic local embedding fallback, embedding dimension validation, and pgvector chunk persistence.",
+    "divergences_logged": "None. Implementation follows ARCHITECTURE (4).md sections 4.4 and 6.",
+    "verification_requirements": "Run docker compose -p assessment exec backend pytest app/tests/test_chunking.py -vv -s and docker compose -p assessment exec backend pytest."
+  },
+  {
+    "from_agent": "test-engineer",
+    "to_agent": "gitpr-agent",
+    "cycle_id": "BC5",
+    "status": "verified",
+    "files_modified": [
+      "backend/app/tests/test_chunking.py",
+      "tests-README.md"
+    ],
+    "test_commands_executed": [
+      "docker compose -p assessment exec backend pytest app/tests/test_chunking.py -vv -s",
+      "docker compose -p assessment exec backend pytest"
+    ],
+    "test_results_summary": "BC5 targeted run passed: 6 passed in 2.81s. Full backend run passed: 20 passed, 12 skipped, 4 warnings in 10.25s.",
+    "coverage_results": "Chunk size, overlap, structure-aware table splitting, deterministic embeddings, dimension validation, pgvector persistence, and generated content_tsv covered."
+  },
+  {
+    "from_agent": "backend-engineer",
+    "to_agent": "test-engineer",
+    "cycle_id": "BC9-BC11",
+    "status": "implemented",
+    "files_modified": [
+      "backend/app/agents/retrieval_agent.py",
+      "backend/app/agents/orchestrator.py",
+      "backend/app/cache/exact.py",
+      "backend/app/cache/semantic.py",
+      "backend/app/cache/service.py",
+      "backend/app/cache/hygiene.py",
+      "backend/app/retrieval/expand_query.py",
+      "backend/app/retrieval/fetch_page_image.py",
+      "backend/app/retrieval/compaction.py",
+      "backend/app/scheduling/cache_scheduler.py",
+      "backend/app/main.py",
+      "backend/app/settings.py"
+    ],
+    "implementation_summary": "Implemented BC9 Retrieval Agent cascade, BC10 Orchestrator generation assembly, and BC11 exact/semantic cache with cache hygiene scheduler.",
+    "divergences_logged": "ARCHITECTURE (4).md section 18 records internal-only page images, deterministic compaction, BC11 scheduler extension by BC20, cache eligibility gate, and document invalidation by missing source document IDs.",
+    "verification_requirements": "Run BC9, BC10, BC11 targeted pytest suites and full backend pytest."
+  },
+  {
+    "from_agent": "test-engineer",
+    "to_agent": "gitpr-agent",
+    "cycle_id": "BC9-BC11",
+    "status": "verified",
+    "test_commands_executed": [
+      "docker compose -p assessment exec backend pytest app/tests/test_retrieval_agent.py -vv",
+      "docker compose -p assessment exec backend pytest app/tests/test_orchestrator.py -vv",
+      "docker compose -p assessment exec backend pytest app/tests/test_cache.py -vv",
+      "docker compose -p assessment exec backend pytest"
+    ],
+    "test_results_summary": "BC9 targeted run passed: 8 passed in 8.35s. BC10 targeted run passed: 9 passed in 0.82s. BC11 targeted run passed: 9 passed in 7.74s. Full backend run passed: 64 passed, 12 skipped, 4 warnings in 20.89s.",
+    "coverage_results": "Retrieval Agent confidence gate, expansion fallback, trace propagation, Orchestrator compaction/import boundary/payload assembly, and cache hit/miss/eviction/invalidation/prompt-cache behaviors covered."
+  },
+  {
+    "from_agent": "orchestrator",
+    "to_agent": "backend-frontend-ml-agents",
+    "cycle_id": "BC12-BC15",
+    "status": "planned",
+    "files_modified": [
+      "plan.md",
+      ".codex/handover.json"
+    ],
+    "implementation_summary": "Ingested agents.md, backend/ML/test/GitPR skill specs, current plan.md/tests-README.md, ARCHITECTURE (4).md, and BC11-BC15 build plan. Initialized the combined BC12-BC15 cycle on branch codex/bc12-bc15-chat-documents-guardrails-auth.",
+    "divergences_logged": "None at planning time. Required decisions for idempotency polling, summary trigger, upload-limit config endpoint, output-filter strategy, sanitizer, client_ip, and rate-limit counter storage are already specified in the build plan and will be folded into ARCHITECTURE (4).md section 18 during implementation/docs closure.",
+    "verification_requirements": "Implement BC12-BC15 with deterministic backend/frontend tests and run targeted plus full verification before final docs/commit closure."
+  },
+  {
+    "from_agent": "backend-frontend-ml-agents",
+    "to_agent": "test-engineer",
+    "cycle_id": "BC12-BC15",
+    "status": "implemented_pending_verification",
+    "files_modified": [
+      "backend/app/api/v1/chat.py",
+      "backend/app/api/v1/auth.py",
+      "backend/app/api/v1/config.py",
+      "backend/app/chat/conversation.py",
+      "backend/app/generation/client.py",
+      "backend/app/security/auth.py",
+      "backend/app/security/guardrails.py",
+      "backend/app/security/rate_limit.py",
+      "backend/app/chainlit_steps.py",
+      "backend/app/main.py",
+      "backend/app/models.py",
+      "backend/alembic/versions/0012_query_audit_client_ip.py",
+      "backend/app/documents/routes.py",
+      "backend/app/retrieval/hybrid_search.py",
+      "backend/app/retrieval/rerank.py",
+      "backend/app/retrieval/expand_query.py",
+      "backend/app/retrieval/fetch_page_image.py",
+      "frontend/src/app/documents/page.tsx",
+      "frontend/src/lib/documentsCore.js",
+      "frontend/tests/documentsCore.test.mjs",
+      "frontend/tests/run-tests.mjs"
+    ],
+    "implementation_summary": "Implemented BC12 chat idempotency/cache-before-retrieval/session persistence/generation boundary, BC13 upload-limits config and documents UI, BC14 input/output guardrails and sanitizer/cache eligibility, and BC15 JWT auth plus per-session/per-IP rate limiting.",
+    "divergences_logged": "ARCHITECTURE (4).md section 18 now records BC12-BC15 decisions. No intentional divergence from the requested architecture is known.",
+    "verification_requirements": "Wait for rebuilt Docker images, run BC12-BC15 targeted backend tests, frontend deterministic tests, then full backend/frontend verification before marking complete."
+  },
+  {
+    "from_agent": "test-engineer",
+    "to_agent": "gitpr-agent",
+    "cycle_id": "BC12-BC15",
+    "status": "verification_blocked_by_backend_image_build",
+    "test_commands_executed": [
+      "python3 -m compileall backend/app",
+      "npm test --prefix frontend -- --runInBand",
+      "docker compose -p assessment up -d --build backend frontend"
+    ],
+    "test_results_summary": "Backend compile passed. Frontend deterministic tests passed: 1 test passed, 0 failed. Backend Docker image rebuild failed during pip install with package hash mismatch: expected sha256 edd81538446786ec3b73972543e53bb43bcaf0bfc8ef76cb679fcc390ffe136d, got 2ba3fbf7a9d0eb89c59f58dac6f4623089aa375ac40569fcbad9af9e2b646235.",
+    "coverage_results": "BC12-BC15 backend targeted pytest commands remain pending until the image build is repaired and rebuilt."
+  },
+  {
+    "from_agent": "orchestrator",
+    "to_agent": "backend-ml-test-gitpr-agents",
+    "cycle_id": "BC16-BC28",
+    "status": "implemented",
+    "files_modified": [
+      "backend/app/scheduling/singleton.py",
+      "backend/app/scheduling/cache_scheduler.py",
+      "backend/app/scheduling/grading.py",
+      "backend/app/scheduling/anomaly.py",
+      "backend/app/agents/judge_agent.py",
+      "backend/app/security/numeric_grounding.py",
+      "gold_standard/",
+      "backend/alembic/versions/0013_corrective_grading_schema.py",
+      "backend/Dockerfile",
+      "docker-compose.yaml",
+      ".dockerignore",
+      "backend/.dockerignore"
+    ],
+    "implementation_summary": "Completed BC21-BC28 corrective scope: singleton scheduled jobs, cost pricing, rate-limit indexes, semantic-cache embedding-model scoping, exact clinical numeric grounding, reproducible JudgeAgent metadata, gold-standard runner/persistence/reporting/deviation alerts, S3 storage abstraction, health route, and backend image packaging for gold_standard.",
+    "divergences_logged": "Generated-output numerical figures must match cited-source values exactly. Gold manual/CI score runs require corpus fetch/checksum pinning and expected-answer verification before scores are trusted. Playwright was documented but not run because the current frontend package has no Playwright dependency, config, or e2e specs.",
+    "verification_requirements": "Run deterministic backend/frontend suites, targeted corrective suites, backend image build, and health smoke."
+  },
+  {
+    "from_agent": "test-engineer",
+    "to_agent": "gitpr-agent",
+    "cycle_id": "BC16-BC28",
+    "status": "verified",
+    "test_commands_executed": [
+      "python3 -m compileall backend/app gold_standard",
+      "docker compose -p assessment build backend",
+      "docker compose -p assessment exec backend pytest app/tests/test_scheduler_singleton.py -vv",
+      "docker compose -p assessment exec backend pytest app/tests/test_cost.py app/tests/test_numeric_grounding.py app/tests/test_anomaly_detection.py app/tests/test_judge_reproducibility.py -vv",
+      "docker compose -p assessment exec backend pytest app/tests/test_rate_limit_indexes.py -vv",
+      "docker compose -p assessment exec backend pytest app/tests/test_semantic_cache_model_scope.py -vv",
+      "docker compose -p assessment exec backend pytest app/tests/test_gold_standard.py -vv",
+      "docker compose -p assessment exec backend pytest -m golden_set -vv",
+      "docker compose -p assessment exec backend pytest",
+      "npm test --prefix frontend -- --runInBand",
+      "docker compose -p assessment exec backend alembic upgrade head",
+      "docker compose -p assessment exec backend python -c \"import urllib.request; print(urllib.request.urlopen('http://localhost:6100/health', timeout=5).read().decode())\""
+    ],
+    "test_results_summary": "Backend image build passed. Full backend suite passed: 120 passed, 12 skipped, 4 warnings in 41.03s. Frontend deterministic test passed: 1 passed. Backend health smoke returned {\"status\":\"ok\",\"database\":\"ok\"}.",
+    "coverage_results": "BC21-BC28 deterministic coverage includes scheduler singleton lock/release, cost pricing, rate-limit indexes, semantic-cache model scoping/drift cleanup, exact numeric grounding, anomaly cadence, JudgeAgent reproducibility, Chainlit step shim, golden-set marker report, gold eval persistence/skipping/deviation logic, and Docker image packaging for gold_standard."
+  },
+  {
+    "from_agent": "orchestrator",
+    "to_agent": "test-engineer",
+    "cycle_id": "PRODUCTION_GAP_CLOSURE",
+    "status": "targeted_verified",
+    "files_modified": [
+      "backend/app/documents/routes.py",
+      "backend/app/api/v1/chat.py",
+      "backend/app/home/routes.py",
+      "chainlit_app/app/chat.py",
+      "chainlit_app/requirements.txt",
+      "frontend/src/app/page.tsx",
+      "frontend/src/app/layout.tsx",
+      "frontend/src/app/globals.css",
+      "frontend/src/lib/documentsCore.js",
+      "frontend/tests/documentsCore.test.mjs",
+      "frontend/.dockerignore",
+      "frontend/playwright.config.ts",
+      "frontend/e2e/upload-chainlit-citation.spec.ts",
+      "frontend/package.json",
+      "frontend/package-lock.json",
+      "chainlit_app/.chainlit/config.toml",
+      "chainlit_app/chainlit.md",
+      "chainlit_app/public/rag-theme.css",
+      "chainlit_app/tests/test_chat.py",
+      "docker-compose.yaml",
+      "README.md",
+      "tests-README.md",
+      "frontend/README.md",
+      "local-setup.md",
+      "DEPLOYMENT.md",
+      "build-plans-architecture/ARCHITECTURE (4).md",
+      "build-plans-architecture/SUBMISSION_CHECKLIST_STATUS.md",
+      "plan.md"
+    ],
+    "implementation_summary": "Closed explicit production gaps: upload route now schedules the ingestion worker after new upload commit, document upload/list/status/delete routes are public for local reviewer use without IAM/JWT gating, /chat returns structured citation metadata, Chainlit calls /api/v1/chat and renders answer-level Chicago citation notes, Next.js root is an updated public chat workspace, and Playwright e2e scaffold covers upload-to-indexed-to-Chainlit cited-answer smoke using a generated table PDF fixture.",
+    "divergences_logged": "ARCHITECTURE (4).md section 18 records FastAPI background-task upload handoff, backend-owned citation metadata, and runtime-generated Playwright PDF fixture decisions. Real gold score floors remain trust-gated until corpus fetch/checksum pinning, indexing, and human expected-answer verification.",
+    "verification_requirements": "Targeted verification complete: npm test --prefix frontend -- --runInBand passed; docker compose -p assessment exec backend pytest app/tests/test_auth.py app/tests/test_documents.py -vv passed 9 tests after rebuild; live GET /api/v1/documents returned 200 with no token and with invalid bearer header; no-file POST /api/v1/documents returned 422 instead of 401; backend health returned ok. Playwright live smoke, clean-clone dry run, and full backend/frontend verification remain pending."
+  },
+  {
+    "from_agent": "orchestrator",
+    "to_agent": "backend-frontend-ml-agents",
+    "cycle_id": "CHAT_UI_REQUIREMENT_POLISH",
+    "status": "implemented",
+    "branch": "codex/chat-ui-requirement-polish",
+    "chat_surface_decision": "BOTH. Next.js :3000 and Chainlit :8000 are supported, equivalent chat surfaces over the same /api/v1/chat contract, which the starter explicitly allows ('in place of or alongside'). Neither client owns retrieval, generation, or citation logic, so a behavioral difference between them is a bug, not a feature. Logged in ARCHITECTURE (4).md section 18.",
+    "files_modified": [
+      "backend/app/chat/response_presenter.py",
+      "backend/app/api/v1/chat.py",
+      "backend/app/agents/orchestrator.py",
+      "backend/app/generation/client.py",
+      "backend/app/security/guardrails.py",
+      "backend/app/cache/exact.py",
+      "backend/app/cache/semantic.py",
+      "backend/app/models.py",
+      "backend/app/settings.py",
+      "backend/alembic/versions/0014_cache_source_chunk_ids.py",
+      "backend/app/tests/test_response_presenter.py",
+      "backend/app/tests/test_rag_system_integration.py",
+      "backend/app/tests/test_chat.py",
+      "backend/app/tests/test_orchestrator.py",
+      "backend/app/tests/test_migrations.py",
+      "frontend/src/lib/chatCore.js",
+      "frontend/src/components/AppShell.tsx",
+      "frontend/src/app/page.tsx",
+      "frontend/src/app/layout.tsx",
+      "frontend/src/app/documents/page.tsx",
+      "frontend/src/app/globals.css",
+      "frontend/tests/chatCore.test.mjs",
+      "frontend/tests/documentsCore.test.mjs",
+      "frontend/e2e/chat-ui.spec.ts",
+      "chainlit_app/app/chat.py",
+      "chainlit_app/.chainlit/config.toml",
+      "chainlit_app/public/rag-theme.css",
+      "chainlit_app/public/upload-icon.svg",
+      "chainlit_app/chainlit.md",
+      "chainlit_app/tests/test_chat.py",
+      "README.md",
+      "DEPLOYMENT.md",
+      "tests-README.md",
+      "frontend/README.md",
+      "local-setup.md",
+      "plan.md",
+      "build-plans-architecture/ARCHITECTURE (4).md",
+      "build-plans-architecture/SUBMISSION_CHECKLIST_STATUS.md"
+    ],
+    "implementation_summary": "Added a backend response-presentation boundary that owns every writing-style and citation rule: it validates [cite:n] markers against backend citation candidates, places Chicago superscripts at the end of the sentence each supports, drops invalid markers, strips filename/document-name openings and internal details, and assembles the reference list from chunk metadata only so the model can never invent a source or page. Answers claiming facts without a surviving citation become a concise no-answer rather than being shown ungrounded, and only grounded cited answers are cache-eligible. Migration 0014 stores source_chunk_ids on both caches so a cache hit rebuilds the reference list its superscripts point at. Rebuilt both chat surfaces: Next.js gained an app shell with route-driven active nav, a hamburger drawer at <=1024px, a loading row with duplicate-send prevention, inert-text answer rendering with linked superscripts and a Sources list, and a + upload button at every viewport; Chainlit gained a loading placeholder replaced in place, mirrored Sources rendering, Starter cards, and a + Upload PDF button via its documented [[UI.header_links]] component. All user-facing copy was rewritten in plain language with jargon guards in tests.",
+    "defects_found_and_fixed": [
+      "DeterministicGenerationClient opened every answer with 'Based on <filename>.pdf, ...' - the exact anti-pattern the reviewer reported.",
+      "Off-corpus questions returned a confident, correctly-cited answer about the wrong topic: retrieval's nearest neighbour was always quoted back, and lexical grounding could not catch it because the sentence really was verbatim from a source. Generation now requires a multi-word question to match a source on more than one content word.",
+      "Cached answers kept their superscripts but lost their citations, rendering a dangling marker with no Sources list.",
+      "The mobile menu scrim was exposed as a second button carrying the same label as the toggle, duplicating the close control in the accessibility tree.",
+      "A hand-rolled Chainlit floating upload button collided with Chainlit's own header link at 1440px. Caught by screenshots, not by assertions; replaced with the documented component.",
+      "A user whose PDF was still processing was told to 'upload a document first'. Preparing and empty-corpus are now distinct messages."
+    ],
+    "divergences_logged": "ARCHITECTURE (4).md section 18 records the both-surfaces decision, the response-presentation boundary, the [cite:n] citation contract, no-answer conversion for uncited claims, cache source_chunk_ids, and the Chainlit documented-component decision. Section 21 now documents corpus/input, answer-behavior, and deployment assumptions.",
+    "verification_requirements": "Verified: backend pytest -> 161 passed, 12 skipped, 4 warnings in 62.95s; RAG system integration suite -> 17 passed; npm test --prefix frontend -> 21 passed; tsc --noEmit clean; python3 -m unittest chainlit_app.tests.test_chat -> 10 passed; npx playwright test e2e/chat-ui.spec.ts -> 16 passed in real Chromium covering both chat surfaces at 375x812, 768x1024, 1024x768, and 1440x900; both localhost:3000 and localhost:8000 checked live and screenshotted; backend health ok. Still pending: the upload-to-cited-answer live ingestion e2e, a clean-clone dry run, and real gold score runs (corpus fetch/checksum pinning/indexing/human expected-answer verification)."
+  }
+]
