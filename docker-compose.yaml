@@ -1,7 +1,7 @@
 services:
   backend:
       build:
-        context: ./backend
+        context: ./backend_old
         dockerfile: Dockerfile
       restart: always
       ports:
@@ -9,7 +9,7 @@ services:
 
   frontend:
       build:
-        context: ./frontend
+        context: ./frontend_old
         dockerfile: Dockerfile
       command: npm start
       restart: always
@@ -18,14 +18,14 @@ services:
       ports:
         - "3000:3000"
 
-  chainlit:
-      build:
-        context: ./chainlit_app
-        dockerfile: Dockerfile
-      restart: always
-      ports:
-        - "8000:8000"
-  
+  # chainlit:
+  #     build:
+  #       context: ./chainlit_app_old
+  #       dockerfile: Dockerfile
+  #     restart: always
+  #     ports:
+  #       - "8000:8000"
+
   relational_db:
     image: pgvector/pgvector:pg16
     restart: always
