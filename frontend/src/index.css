@@ -1,12 +1,3 @@
-/*
- * Only Tailwind's theme + utility layers are imported (not preflight.css) so
- * Tailwind's reset doesn't fight Chakra UI's own base styles. Tailwind is
- * reserved for one-off utility tweaks on plain, non-Chakra elements; Chakra
- * components should use Chakra style props instead of Tailwind classes.
- */
-@import 'tailwindcss/theme.css' layer(theme);
-@import 'tailwindcss/utilities.css' layer(utilities);
-
 body {
   margin: 0;
 }

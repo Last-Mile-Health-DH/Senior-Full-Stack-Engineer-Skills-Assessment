@@ -1,4 +1,5 @@
 from collections.abc import Iterator
+from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
@@ -7,8 +8,8 @@ from fastapi.testclient import TestClient
 from app.core.config import Settings
 from app.main import app
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
-SAMPLE_PDF_PATH = REPO_ROOT / "uploads" / "Best_practices_Data_Use_Community_Health.pdf"
+REPO_ROOT = Path(__file__).resolve().parents[2]
+SAMPLE_PDF_PATH = REPO_ROOT / "notebook" / "uploads" / "Best_practices_Data_Use_Community_Health.pdf"
 
 
 class FakeEmbedder:
@@ -26,6 +27,17 @@ class FakeConnection:
         self.executed.append((sql, params))
         if "SELECT 1" in sql:
             return []
+        if "SELECT" in sql and "document_files" in sql:
+            return [
+                (
+                    1,
+                    "Best_practices_Data_Use_Community_Health.pdf",
+                    245_760,
+                    3,
+                    "application/pdf",
+                    datetime(2026, 7, 1, tzinfo=timezone.utc),
+                ),
+            ]
         if "SELECT" in sql and "documents" in sql:
             return [
                 ("Best_practices_Data_Use_Community_Health.pdf", "UNICEF supports community health workers.", 0.87),

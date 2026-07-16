@@ -18,6 +18,19 @@ export interface UploadResponse {
   chunks_ingested: number
 }
 
+export interface DocumentFile {
+  id: number
+  doc_name: string
+  file_size: number
+  page_count: number | null
+  file_type: string
+  created_at: string
+}
+
+export interface DocumentListResponse {
+  documents: DocumentFile[]
+}
+
 // Client-side only — not part of the backend contract.
 export interface ChatMessage {
   id: string

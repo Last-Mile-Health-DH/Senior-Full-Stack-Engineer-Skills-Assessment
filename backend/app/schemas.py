@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel, Field
 
 
@@ -10,6 +12,19 @@ class HealthResponse(BaseModel):
 class UploadResponse(BaseModel):
     doc_name: str
     chunks_ingested: int
+
+
+class DocumentFile(BaseModel):
+    id: int
+    doc_name: str
+    file_size: int
+    page_count: int | None
+    file_type: str
+    created_at: datetime
+
+
+class DocumentListResponse(BaseModel):
+    documents: list[DocumentFile]
 
 
 class ChatRequest(BaseModel):

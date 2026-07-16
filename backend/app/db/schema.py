@@ -12,6 +12,18 @@ CREATE TABLE IF NOT EXISTS documents (
 
 CREATE INDEX IF NOT EXISTS documents_embedding_hnsw_idx
     ON documents USING hnsw (embedding vector_cosine_ops);
+
+CREATE TABLE IF NOT EXISTS document_files (
+    id SERIAL PRIMARY KEY,
+    doc_name TEXT NOT NULL,
+    file_size BIGINT NOT NULL,
+    page_count INTEGER,
+    file_type TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS document_files_created_at_idx
+    ON document_files (created_at DESC);
 """
 
 

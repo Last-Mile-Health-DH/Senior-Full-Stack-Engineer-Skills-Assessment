@@ -11,7 +11,7 @@ from app.core.config import get_settings
 from app.db.pool import create_pool
 from app.db.schema import init_schema
 from app.errors import register_exception_handlers
-from app.routers import chat, documents, health
+from app.routers import chat, documents, health, instructions
 
 
 @asynccontextmanager
@@ -52,6 +52,7 @@ def create_app() -> FastAPI:
     app.include_router(health.router)
     app.include_router(documents.router)
     app.include_router(chat.router)
+    app.include_router(instructions.router)
 
     return app
 

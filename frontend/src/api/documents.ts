@@ -1,5 +1,5 @@
 import { apiRequest } from './client'
-import type { UploadResponse } from '../types'
+import type { DocumentListResponse, UploadResponse } from '../types'
 
 export function uploadDocument(file: File): Promise<UploadResponse> {
   const formData = new FormData()
@@ -11,4 +11,8 @@ export function uploadDocument(file: File): Promise<UploadResponse> {
     method: 'POST',
     body: formData,
   })
+}
+
+export function listDocuments(): Promise<DocumentListResponse> {
+  return apiRequest<DocumentListResponse>('/documents')
 }

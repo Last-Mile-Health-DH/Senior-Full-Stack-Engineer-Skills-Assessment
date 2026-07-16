@@ -1,13 +1,17 @@
-import { Route, Routes } from 'react-router'
+import { Navigate, Route, Routes } from 'react-router'
 import { AppLayout } from './components/layout/AppLayout'
-import ChatPage from './pages/ChatPage'
+// Chat is disabled for this deployment — see NavBar for the corresponding nav link.
+// import ChatPage from './pages/ChatPage'
+import InstructionsPage from './pages/InstructionsPage'
 import UploadPage from './pages/UploadPage'
 
 export function AppRoutes() {
   return (
     <Routes>
       <Route element={<AppLayout />}>
-        <Route index element={<ChatPage />} />
+        {/* <Route index element={<ChatPage />} /> */}
+        <Route index element={<Navigate to="instructions" replace />} />
+        <Route path="instructions" element={<InstructionsPage />} />
         <Route path="upload" element={<UploadPage />} />
       </Route>
     </Routes>

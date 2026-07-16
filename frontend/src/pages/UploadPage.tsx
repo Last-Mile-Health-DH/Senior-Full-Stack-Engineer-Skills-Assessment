@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Alert, Box, Button, Heading, Text, VStack } from '@chakra-ui/react'
-import { uploadDocument } from '../api/documents'
+import { listDocuments, uploadDocument } from '../api/documents'
 import { ApiError } from '../api/client'
+import { DocumentGrid } from '../components/upload/DocumentGrid'
 import { UploadDropzone } from '../components/upload/UploadDropzone'
 import { UploadResult } from '../components/upload/UploadResult'
-import type { UploadResponse } from '../types'
+import type { DocumentFile, UploadResponse } from '../types'
 
 const MAX_SIZE_WARNING_MB = 20
 
@@ -18,6 +19,28 @@ export default function UploadPage() {
   const [isUploading, setIsUploading] = useState(false)
   const [result, setResult] = useState<UploadResponse | null>(null)
   const [uploadError, setUploadError] = useState<string | null>(null)
+
+  const [documents, setDocuments] = useState<DocumentFile[]>([])
+  const [isLoadingDocuments, setIsLoadingDocuments] = useState(true)
+  const [documentsError, setDocumentsError] = useState<string | null>(null)
+
+  const fetchDocuments = async () => {
+    setIsLoadingDocuments(true)
+    setDocumentsError(null)
+    try {
+      const response = await listDocuments()
+      setDocuments(response.documents)
+    } catch (error) {
+      const message = error instanceof ApiError ? error.message : 'Could not load uploaded documents.'
+      setDocumentsError(message)
+    } finally {
+      setIsLoadingDocuments(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchDocuments()
+  }, [])
 
   const handleFileSelected = (file: File) => {
     setResult(null)
@@ -42,6 +65,7 @@ export default function UploadPage() {
       const response = await uploadDocument(selectedFile)
       setResult(response)
       setSelectedFile(null)
+      await fetchDocuments()
     } catch (error) {
       const message = error instanceof ApiError ? error.message : 'Upload failed. Please try again.'
       setUploadError(message)
@@ -91,6 +115,17 @@ export default function UploadPage() {
       </Box>
 
       <UploadResult result={result} error={uploadError} />
+
+      <Heading size="md" mt={4}>
+        Uploaded documents
+      </Heading>
+      {documentsError && (
+        <Alert.Root status="error">
+          <Alert.Indicator />
+          <Alert.Title>{documentsError}</Alert.Title>
+        </Alert.Root>
+      )}
+      {isLoadingDocuments ? <Text color="fg.muted">Loading…</Text> : <DocumentGrid documents={documents} />}
     </VStack>
   )
 }

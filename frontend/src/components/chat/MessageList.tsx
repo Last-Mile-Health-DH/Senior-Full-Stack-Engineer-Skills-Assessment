@@ -12,7 +12,7 @@ export function MessageList({ messages, isPending }: { messages: ChatMessage[]; 
   }
 
   return (
-    <Flex direction="column" gap={3} className="max-h-[60vh] overflow-y-auto" py={4}>
+    <Flex direction="column" gap={3} maxH="60vh" overflowY="auto" py={4}>
       {messages.map((message) => (
         <MessageBubble key={message.id} message={message} />
       ))}

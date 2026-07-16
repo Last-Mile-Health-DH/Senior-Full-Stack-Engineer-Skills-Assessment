@@ -11,9 +11,16 @@ export function NavBar() {
     <Flex as="nav" borderBottomWidth="1px" px={6} py={3} align="center" gap={6}>
       <Heading size="md">RAG Document Assistant</Heading>
       <HStack gap={4} ml="auto">
+        {/* Chat is disabled for this deployment — see AppRoutes.tsx
         <ChakraLink asChild>
           <NavLink to="/" end style={linkStyle}>
             Chat
+          </NavLink>
+        </ChakraLink>
+        */}
+        <ChakraLink asChild>
+          <NavLink to="/instructions" style={linkStyle}>
+            Instructions
           </NavLink>
         </ChakraLink>
         <ChakraLink asChild>

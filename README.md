@@ -11,7 +11,8 @@ Building a basic RAG pipeline, this can be enhanced by building agents. The adva
   > For Production, *Onnxruntime* transformer can be used because it is much lighter
 
 ### Prototyping
-Prototypes on jupyter notebooks the full RAG workflow. This enabled testing pdf parsing libraries, and connection and querying on pgvector
+Prototyped on jupyter notebooks `notebook > RAGWorkflow.ipynb` the full RAG workflow. This enabled testing pdf parsing libraries, chunking and vectorization, and connection and querying on pgvector.
+The full [RAG Pipeline](#rag-pipeline) is prototyped in the notebook
 
 ---
 
@@ -73,7 +74,7 @@ uv sync
 uv run uvicorn app.main:app --port 6100 --reload
 ```
 
-On startup it idempotently creates the `documents` table and an HNSW index if they don't already exist —
+On startup it idempotently creates the "documents" table and an HNSW index if they don't already exist —
 no manual schema setup needed once Postgres+pgvector is reachable.
 
 **Tests** (fast, no live Postgres or OpenAI key required — DB/embedder/LLM are mocked):
@@ -123,54 +124,53 @@ uv run pytest
 ---
 
 ## Architectural decisions & trade-offs
+**React-router**: Is light weight compared to NextJs, which is a full-stack framework
+**FastAPI with React Frontend**: Used for document uploads. This combo handles files upload, and tracking. Frontend handles document upload through a drag-n-drop dropzonel, which sends to the backend, where the file goes through the full 
 
-- **`rag_builder.py` is vendored, not imported.** The backend copies `RAGPgVector` into
-  `backend/app/rag/rag_builder.py` rather than reaching across to the repo-root copy via `sys.path`, so
-  the backend stays an independently deployable unit with its own dependency graph. The trade-off is two
-  copies of the same ~90 lines that can drift; acceptable for this scope, worth revisiting (e.g. an
-  installable shared package) if the notebook and backend need to stay in lockstep long-term.
-- **Chainlit calls the backend's REST API rather than duplicating RAG logic.** This keeps a single
-  source of truth for retrieval/generation — Chainlit is purely a UI, and inherits backend behavior
-  changes automatically instead of needing a third vendored copy of `rag_builder.py`.
-- **Backend package lives at `backend/app/` (flat, no `src/` layout), decoupled from the project name.**
-  `pyproject.toml` uses `uv`'s `[tool.uv.build-backend]` (`module-name = "app"`, `module-root = ""`) so
-  the importable module (`app`) can differ from the distribution name (`backend`) without a `src/`
-  indirection layer.
-- **Each service ships its own multi-stage Dockerfile built on `uv`** (backend, Chainlit) or Node
-  (frontend) — no shared monorepo image, matching the "independently deployable unit" decision above.
-  Secrets (`OPENAI_API_KEY`/`ANTHROPIC_API_KEY`) reach the backend container only via
-  `docker-compose.yaml`'s `env_file` at runtime; `.env*` is excluded in each service's `.dockerignore` so
-  a key can never end up baked into an image layer.
-- **Schema DDL auto-runs (idempotently) on backend startup**, not via a migration tool. Given the raw
-  `psycopg` + hand-written SQL decision (no ORM), full migration tooling (Alembic, etc.) was judged out
-  of scope; this means there's no versioned migration history, which a longer-lived production service
-  would want.
-- **Uploaded PDFs are processed in-memory only** — never written to disk. Smaller security/audit
-  surface, but there's no way to re-inspect the original file after ingestion; a production version might
-  persist originals to object storage (S3) alongside the extracted chunks.
-- **`GET /health` always returns 200** with a `database`/`embedder_loaded` status field, rather than a
-  503 on DB failure. Simpler for local dev; a real deployment behind a load balancer doing health-based
-  routing would likely want a proper 503 to double as a readiness probe.
-- **Chakra UI + Tailwind CSS together** (frontend styling). This is an unusual pairing — Chakra ships its
-  own styling engine and both systems want to own global resets. Mitigated by importing only Tailwind's
-  theme + utility layers (not `preflight.css`, which is what would fight Chakra's base styles) and a
-  strict split: Chakra owns interactive/structured components (buttons, inputs, alerts, badges), Tailwind
-  is reserved for one-off utility tweaks on plain wrapper elements (e.g. scroll containers) — never
-  applied as a class override on a Chakra component itself. A from-scratch decision would likely pick one
-  system; this split-responsibility rule is what makes the combination workable.
-- **`react-router` in declarative mode** (`BrowserRouter`/`Routes`/`Route`), not framework mode. This is
-  a 2-route SPA on a plain Vite toolchain — framework mode's file-based routing and data
-  loaders/actions would be more machinery than the app needs.
-- **Chat history is client-side only**, lifted into `AppLayout` (not `ChatPage`) so it survives
-  navigating to `/upload` and back, but it's lost on a hard refresh — there's no backend session/history
-  storage in this scope.
-- **PDF client-side validation is type/extension-only** (hard block); file size only produces a
-  non-blocking warning, since the backend is authoritative on the real upload limit and the frontend
-  shouldn't hardcode a cap that could drift from it.
+##### RAG Pipeline
+```mermaid
+flowchart TD
+    %% Styling Definitions
+    classDef ingestion fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef query fill:#bbf,stroke:#333,stroke-width:2px;
+    classDef storage fill:#f96,stroke:#333,stroke-width:2px;
+
+    %% Ingestion Phase (Data Preparation)
+    subgraph Ingestion_Phase [Data Ingestion Pipeline]
+        A[Raw Documents] --> B[Text Chunking]
+        B --> C[Embedding Model]
+        C --> D[(Vector Database)]
+    end
+
+    %% Query Phase (Retrieval & Generation)
+    subgraph Query_Phase [User Query & Generation Pipeline]
+        E[User Query] --> F[Embedding Model]
+        F --> G[Vector Search]
+        
+        %% Database Retrieval
+        D -.-> |Retrieve Context| G
+        
+        G --> H[Combine Query + Context]
+        H --> I[LLM Prompt]
+        I --> J[Generated Response]
+    end
+
+    %% Apply Styles
+    class A,B,C ingestion;
+    class E,F,G,H,I,J query;
+    class D storage;
+
+```
+
+These can be in a private network, not accessible to the public
+
+
 
 ## Production deployment plan
 
 **Hybrid Search Pipeline using Agents**: Incorporate Hybrid search using Reciprocal Rank Fusion (RFF) for scoring on an agentic framework, building on the simple RAG pipeline. This would ensure robust results ranked by both text and vector such, with the *agentic loop* coming into play to ensure robust answers - some answers containing prompts for further querying
+
+**Ability to Create Knowledgebase**: Ability to create knowledgebase that bundle similar sources of information - in this case uploaded pdfs
 
 **Cloud provider**: AWS. Backend and Chainlit as containerized services on **ECS Fargate** (stateless,
 autoscale on CPU/request count) behind an **ALB**; frontend as a static build on **S3 + CloudFront**;
@@ -203,6 +203,8 @@ Postgres versions), in a private subnet reachable only from the Fargate tasks.
 ### Challenges
 
 The docker install threw me off since it was taking a non-trivial amount of time to install. 
+
+**Root cause:** the default repo chainlit docker image
 
 Manually located the instructions file from 
 <code>backend > app > home > routes.py</code>

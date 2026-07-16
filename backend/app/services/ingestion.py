@@ -21,9 +21,10 @@ def validate_pdf_upload(file_bytes: bytes, filename: str | None, content_type: s
         raise IngestionError("Uploaded file is not a valid PDF.", status_code=422)
 
 
-def extract_text(file_bytes: bytes) -> str:
+def extract_text(file_bytes: bytes) -> tuple[str, int]:
     text_content = ""
     with pdfplumber.open(BytesIO(file_bytes)) as pdf:
+        page_count = len(pdf.pages)
         for page in pdf.pages:
             page_text = page.extract_text()
             if page_text:
@@ -35,7 +36,7 @@ def extract_text(file_bytes: bytes) -> str:
             status_code=422,
         )
 
-    return text_content
+    return text_content, page_count
 
 
 def chunk_text(text: str, openai_embeddings: OpenAIEmbeddings, settings: Settings) -> list[str]:
@@ -73,6 +74,37 @@ def store_chunks(doc_name: str, chunks: list[str], embedder: SentenceTransformer
     return len(chunks)
 
 
+def store_document_metadata(
+    doc_name: str,
+    file_size: int,
+    page_count: int,
+    file_type: str,
+    pool: ConnectionPool,
+) -> None:
+    with pool.connection() as conn:
+        with conn.transaction():
+            conn.execute(
+                """
+                INSERT INTO document_files (doc_name, file_size, page_count, file_type)
+                VALUES (%s, %s, %s, %s)
+                """,
+                (doc_name, file_size, page_count, file_type),
+            )
+
+
+def fetch_document_files(pool: ConnectionPool) -> list[tuple]:
+    with pool.connection() as conn:
+        return list(
+            conn.execute(
+                """
+                SELECT id, doc_name, file_size, page_count, file_type, created_at
+                FROM document_files
+                ORDER BY created_at DESC, id DESC
+                """
+            )
+        )
+
+
 def ingest_document(
     file_bytes: bytes,
     doc_name: str,
@@ -82,10 +114,18 @@ def ingest_document(
     pool: ConnectionPool,
     settings: Settings,
 ) -> int:
-    text = extract_text(file_bytes)
+    text, page_count = extract_text(file_bytes)
     chunks = chunk_text(text, openai_embeddings, settings)
 
     if not chunks:
         raise IngestionError("Document produced no usable chunks after splitting.", status_code=422)
 
-    return store_chunks(doc_name, chunks, embedder, pool)
+    chunks_ingested = store_chunks(doc_name, chunks, embedder, pool)
+    store_document_metadata(
+        doc_name,
+        file_size=len(file_bytes),
+        page_count=page_count,
+        file_type="application/pdf",
+        pool=pool,
+    )
+    return chunks_ingested

@@ -5,10 +5,21 @@ from sentence_transformers import SentenceTransformer
 
 from app.core.config import Settings
 from app.deps import get_db_pool, get_embedder, get_openai_embeddings, get_settings
-from app.schemas import UploadResponse
-from app.services.ingestion import ingest_document, validate_pdf_upload
+from app.schemas import DocumentFile, DocumentListResponse, UploadResponse
+from app.services.ingestion import fetch_document_files, ingest_document, validate_pdf_upload
 
 router = APIRouter()
+
+
+@router.get("/documents", response_model=DocumentListResponse)
+def list_documents(pool: ConnectionPool = Depends(get_db_pool)) -> DocumentListResponse:
+    rows = fetch_document_files(pool)
+    return DocumentListResponse(
+        documents=[
+            DocumentFile(id=r[0], doc_name=r[1], file_size=r[2], page_count=r[3], file_type=r[4], created_at=r[5])
+            for r in rows
+        ]
+    )
 
 
 @router.post("/documents", response_model=UploadResponse)
