@@ -1,9 +1,9 @@
-import backend.services.ingestion as ingestion_module
+import app.services.ingestion as ingestion_module
 from fastapi.testclient import TestClient
 
-from backend.core.config import Settings
-from backend.deps import get_db_pool, get_embedder, get_openai_embeddings, get_settings
-from backend.main import app
+from app.core.config import Settings
+from app.deps import get_db_pool, get_embedder, get_openai_embeddings, get_settings
+from app.main import app
 from tests.conftest import FakeConnection, FakeEmbedder, FakePool, FakeSemanticChunker
 
 

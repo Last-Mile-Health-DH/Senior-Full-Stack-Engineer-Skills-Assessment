@@ -1,7 +1,7 @@
 from fastapi.testclient import TestClient
 
-from backend.deps import get_db_pool, get_embedder
-from backend.main import app
+from app.deps import get_db_pool, get_embedder
+from app.main import app
 from tests.conftest import FakeConnection, FakeEmbedder, FakePool
 
 

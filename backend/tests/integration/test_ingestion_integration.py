@@ -17,7 +17,7 @@ SAMPLE_PDF_PATH = REPO_ROOT / "uploads" / "Best_practices_Data_Use_Community_Hea
 def test_ingest_then_chat_end_to_end():
     from fastapi.testclient import TestClient
 
-    from backend.main import app
+    from app.main import app
 
     with TestClient(app) as client:
         health = client.get("/health")

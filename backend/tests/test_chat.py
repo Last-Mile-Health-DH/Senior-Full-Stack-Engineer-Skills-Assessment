@@ -1,8 +1,8 @@
 from fastapi.testclient import TestClient
 
-from backend.deps import get_rag_engine
-from backend.main import app
-from backend.rag.rag_builder import RAGPgVector
+from app.deps import get_rag_engine
+from app.main import app
+from app.rag.rag_builder import RAGPgVector
 from tests.conftest import FakeConnection, FakeEmbedder, FakeOpenAIClient
 
 

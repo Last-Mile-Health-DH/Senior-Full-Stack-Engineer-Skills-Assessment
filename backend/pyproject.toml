@@ -30,7 +30,11 @@ dev = [
 ]
 
 [project.scripts]
-backend = "backend.main:main"
+backend = "app.main:main"
+
+[tool.uv.build-backend]
+module-name = "app"
+module-root = ""
 
 [build-system]
 requires = ["uv_build>=0.11.21,<0.12.0"]

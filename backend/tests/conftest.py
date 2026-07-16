@@ -4,8 +4,8 @@ from pathlib import Path
 import pytest
 from fastapi.testclient import TestClient
 
-from backend.core.config import Settings
-from backend.main import app
+from app.core.config import Settings
+from app.main import app
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 SAMPLE_PDF_PATH = REPO_ROOT / "uploads" / "Best_practices_Data_Use_Community_Health.pdf"
