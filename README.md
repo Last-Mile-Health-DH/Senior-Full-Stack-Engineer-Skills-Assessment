@@ -1,5 +1,20 @@
-### Workflow
-Building a basic RAG pipeline, this can be enhanced by building agents. The advantage of agents is ability to further query the data and have additional queries automatically generated through the *agentic loop*
+## Last Mile Health — Senior Full-Stack Engineer, AI & Digital Health Practice Assessment
+
+### Table of Contents
+- [Technologies](#technologies)
+- [Prototyping](#prototyping)
+- [Running the app](#running-the-app)
+  - [Docker Compose](#docker-compose)
+  - [Backend (FastAPI)](#backend-fastapi)
+  - [Frontend (React)](#frontend-react)
+  - [Chat UI (Chainlit)](#chat-ui-chainlit)
+- [Architectural decisions & trade-offs](#architectural-decisions--trade-offs)
+  - [RAG Pipeline](#rag-pipeline)
+- [Production deployment plan](#production-deployment-plan)
+  - [App Infra](#app-infra)
+  - [Proposed Production RAG Pipeline, support batch process at scale](#proposed-production-rag-pipeline-support-batch-process-at-scale)
+- [Challenges](#challenges)
+- [AOB](#aob)
 
 ### Technologies
 - Postgres/Pgvector to store document vectors
@@ -12,13 +27,15 @@ Building a basic RAG pipeline, this can be enhanced by building agents. The adva
 
 ### Prototyping
 Prototyped on jupyter notebooks `notebook > RAGWorkflow.ipynb` the full RAG workflow. This enabled testing pdf parsing libraries, chunking and vectorization, and connection and querying on pgvector.
-The full [RAG Pipeline](#rag-pipeline) is prototyped in the notebook
+The full [RAG Pipeline](#rag-pipeline) is prototyped in the [notebook](notebook/RAGWorkflow.ipynb)
+
+Once prototyping was done, code from the notebook was scaffolded into backend FastAPI, frontend and chainlit using Claude Code 
 
 ---
 
 ## Running the app
 
-### Docker Compose (recommended)
+### Docker Compose
 
 Backend, frontend, the Chainlit chat UI, and Postgres+pgvector all run as one stack — each service
 builds from its own multi-stage Dockerfile (`backend/Dockerfile`, `frontend/Dockerfile`,
@@ -30,41 +47,19 @@ cp .env.example .env
 docker compose -p assessment up -d --build
 ```
 
-| Service | URL |
-|---|---|
-| Frontend | http://localhost:3000 |
-| Chat UI (Chainlit) | http://localhost:8000 |
-| Backend (API) | http://localhost:6100 |
-| Database (Postgres) | `localhost:5432` |
+| Service | Tech | URL | Directory |
+|---|---|---|---|
+| Backend | FastAPI (Python, `uv`) | http://localhost:3000 | `backend` (package at `backend/app`) |
+| Frontend | React + Vite + react-router (TypeScript) | http://localhost:8000 | `frontend` |
+| Chat UI | Chainlit (Python, `uv`) | http://localhost:6100 | `chainlit` |
+| Database | PostgreSQL + pgvector | `localhost:5432` | — |
 
 `docker-compose.yaml` points `DATABASE_URL` at the `relational_db` container automatically — you only
 need to supply the API key(s) in `.env`. It's loaded into the backend container via `env_file` at
 runtime, never baked into the image (`.env*` is excluded via `.dockerignore`). Stop everything with
 `docker compose -p assessment down`.
 
-### Running services individually
 
-Useful for iterating on one service without rebuilding images. Three independent services, each with
-its own dependency management, live at the repo root:
-
-| Service | Tech | Port | Directory |
-|---|---|---|---|
-| Backend | FastAPI (Python, `uv`) | `6100` | `backend` (package at `backend/app`) |
-| Frontend | React + Vite + react-router (TypeScript) | `3000` | `frontend` |
-| Chat UI | Chainlit (Python, `uv`) | `8000` | `chainlit` |
-| Database | PostgreSQL + pgvector | `5432` | — |
-
-Copy the root env file and fill in your keys before starting anything:
-
-```
-cp .env.example .env
-# then edit .env: set OPENAI_API_KEY and DATABASE_URL
-```
-
-Postgres must already be running with the `pgvector` extension **available** (e.g. the
-`pgvector/pgvector` Docker image, or `brew install pgvector` against a local Postgres) — the backend
-runs `CREATE EXTENSION IF NOT EXISTS vector` and creates its own tables/indexes on startup, but it can't
-install the extension binary itself.
 
 ### Backend (FastAPI)
 
@@ -123,9 +118,61 @@ uv run pytest
 
 ---
 
-## Architectural decisions & trade-offs
+## Architectural decisions & trade-offs {#arch-tradeoff}
+```mermaid
+flowchart LR
+    subgraph Clients
+        U1[Admin / Private User<br/>Browser]
+        U2[Public User<br/>Browser]
+    end
+
+    subgraph App["Docker Compose stack"]
+        FE["Frontend<br/>React + Vite + react-router<br/>:3000"]
+        CL["Chat UI<br/>Chainlit (Python)<br/>:8000"]
+        BE["Backend API<br/>FastAPI (Python, uv)<br/>:6100"]
+        DB[("Postgres + pgvector<br/>:5432")]
+    end
+
+    subgraph External
+        OAI["OpenAI API<br/>(embeddings / chat completion)"]
+    end
+
+    U1 -->|HTTP| FE
+    U2 -->|WebSocket| CL
+
+    FE -->|"REST: POST /documents<br/>GET /documents<br/>GET /instructions"| BE
+    CL -->|"REST: POST /chat<br/>(server-to-server via api_client.py)"| BE
+
+    BE -->|psycopg / psycopg_pool| DB
+    BE -->|"embed chunks<br/>(SentenceTransformer, local)"| BE
+    BE -->|"chat completion"| OAI
+
+    classDef frontend fill:#bbf,stroke:#333,stroke-width:1px;
+    classDef backend fill:#f96,stroke:#333,stroke-width:1px;
+    classDef storage fill:#9f9,stroke:#333,stroke-width:1px;
+    classDef external fill:#eee,stroke:#333,stroke-width:1px,stroke-dasharray: 3 3;
+
+    class FE,CL frontend;
+    class BE backend;
+    class DB storage;
+    class OAI external;
+```
+
 **React-router**: Is light weight compared to NextJs, which is a full-stack framework
-**FastAPI with React Frontend**: Used for document uploads. This combo handles files upload, and tracking. Frontend handles document upload through a drag-n-drop dropzonel, which sends to the backend, where the file goes through the full 
+
+**React Frontend**: Used for document uploads. This combo handles files upload, and visual tracking of uploaded files. Frontend handles document upload through a drag-n-drop dropzone, which sends to the backend.
+
+**FastAPI Backend**: The uploaded file goes through the full rag pipeline, that is, the file is loaded -> transformed using the sentence transformer -> chunked -> vectorized -> and saved to pgvector.
+The backend also handles queries against the database, and integrates chatting with the LLM to produce comprehensive results. 
+
+The full [RAG pipeline](#rag-pipeline) is captured below
+
+**Chainlit**: Exposes the public facing chat UI 
+In the implemented architecture, the frontend and backend layers are accessible to admins only; closed behind either a firewall or private network. The chainlit layer is public
+
+**Pgvectors**: Stores document vectors, uploaded documents metadata and other persistent data
+
+> These can be in a private network, not accessible to the public, whilst Chainlit is public.
 
 ##### RAG Pipeline
 ```mermaid
@@ -143,7 +190,7 @@ flowchart TD
     end
 
     %% Query Phase (Retrieval & Generation)
-    subgraph Query_Phase [User Query & Generation Pipeline]
+    subgraph Query_Phase [User Query & Generation]
         E[User Query] --> F[Embedding Model]
         F --> G[Vector Search]
         
@@ -162,36 +209,32 @@ flowchart TD
 
 ```
 
-These can be in a private network, not accessible to the public
+
 
 
 
 ## Production deployment plan
 
-**Hybrid Search Pipeline using Agents**: Incorporate Hybrid search using Reciprocal Rank Fusion (RFF) for scoring on an agentic framework, building on the simple RAG pipeline. This would ensure robust results ranked by both text and vector such, with the *agentic loop* coming into play to ensure robust answers - some answers containing prompts for further querying
+**Hybrid Search Pipeline using Agent**: Incorporate Hybrid search using Reciprocal Rank Fusion (RFF) for scoring on an agentic framework, building on the simple RAG pipeline. This would ensure robust results ranked by both text and vectors, with the *agentic loop* coming into play to ensure robust answers i.e. answers with additional queries automatically generated
 
 **Ability to Create Knowledgebase**: Ability to create knowledgebase that bundle similar sources of information - in this case uploaded pdfs
 
-**Cloud provider**: AWS. Backend and Chainlit as containerized services on **ECS Fargate** (stateless,
-autoscale on CPU/request count) behind an **ALB**; frontend as a static build on **S3 + CloudFront**;
-database on **RDS for PostgreSQL** with the `pgvector` extension enabled (RDS supports it on recent
-Postgres versions), in a private subnet reachable only from the Fargate tasks.
+**Cloud provider**: AWS Backend and Chainlit as containerized services on Amazon Elastic Container Service(**ECS Fargate**), which is serveless compute infra, behind an Amazon Elastic Load Balance (**ALB**); frontend as a static build on **CloudFront**; database on **RDS for PostgreSQL** with the `pgvector` extension enabled, in a private subnet reachable only from the Fargate tasks.
 
-**CI/CD** (GitHub Actions):
+**CI/CD** (using GitHub Actions):
 - On every PR: lint + typecheck + test each service independently (`uv run pytest` for backend/chainlit,
-  `npm test` + `tsc -b` for frontend) as a matrix job; fail fast, no deploy.
-- On merge to `main`: build Docker images per service, push to **ECR**, then update the corresponding
-  ECS service (`aws ecs update-service --force-new-deployment` or a proper CD tool like CodeDeploy for
-  blue/green); frontend build artifacts sync to S3 with a CloudFront invalidation.
+  `npm test` + `tsc -b` for frontend) as a job; if fail, no deploy.
+- On merge to `main`: build Docker images per service, push to (Elastic Container Registry) **ECR**, then update the corresponding
+  ECS service; frontend build artifacts sync to **S3** with a CloudFront invalidation.
 - Schema init already runs idempotently on backend startup, so no separate migration step is required for
-  this scope — a longer-lived service would run Alembic migrations as an explicit pre-deploy step instead.
+  this scope — a longer-lived service would run migrations as an explicit pre-deploy step instead.
 
 **Infrastructure considerations**:
 - Secrets (`OPENAI_API_KEY`, `DATABASE_URL`, etc.) via **AWS Secrets Manager**, injected as task
   environment variables — never committed, never baked into images.
 - `CORS_ORIGINS` set per-environment to the actual deployed frontend domain, not `localhost`.
-- `/health` semantics should move to "503 on DB-down" in production so the ALB target group can actually
-  route around an unhealthy instance (see trade-offs above).
+<!--- `/health` semantics should move to "503 on DB-down" in production so both ALBs' target groups can
+  actually route around an unhealthy instance.-->
 - The `SentenceTransformer` embedder loads into memory once per instance at startup — size Fargate task
   memory accordingly and consider a minimum warm instance count to avoid cold-start latency on scale-out.
 - Connection pool size × number of backend replicas must stay under RDS's `max_connections`; add
@@ -199,12 +242,163 @@ Postgres versions), in a private subnet reachable only from the Fargate tasks.
 - Structured logging + an error tracker (e.g. Sentry) wired into the existing global exception handler for
   production visibility beyond the current server-side traceback logging.
 
+#### App Infra
+```mermaid
+flowchart TB
+    subgraph Public["Public Internet"]
+        PubUser["Public User<br/>Browser"]
+    end
+
+    subgraph AdminSide["Admin / Private Users"]
+        AdminUser["Admin / Private User"]
+        VPN["AWS Client VPN<br/>(SAML/OIDC federated)"]
+        AdminUser --> VPN
+    end
+
+    subgraph AWS["AWS — VPC"]
+        subgraph PublicSubnet["Public Subnets"]
+            WAF["AWS WAF<br/>(managed rules + rate limiting)"]
+            PubALB["Public ALB<br/>chat.example.org"]
+            NAT["NAT Gateway"]
+            WAF --> PubALB
+        end
+
+        subgraph PrivateSubnet["Private Subnets"]
+            IntALB["Internal ALB<br/>(host-based routing)<br/>Route 53 private hosted zone"]
+
+            subgraph FargateFE["ECS Fargate"]
+                FE["Frontend<br/>React + Vite<br/>(nginx/serve)"]
+            end
+            subgraph FargateBE["ECS Fargate"]
+                BE["Backend API<br/>FastAPI"]
+            end
+            subgraph FargateCL["ECS Fargate"]
+                CL["Chainlit<br/>Chat UI"]
+            end
+
+            RDS[("RDS PostgreSQL<br/>+ pgvector")]
+
+            IntALB --> FE
+            IntALB --> BE
+            FE -->|"/documents, /instructions"| BE
+            CL -->|"ECS Service Connect<br/>(private, server-to-server)"| BE
+            BE --> RDS
+        end
+
+        PubALB --> CL
+        VPN -->|"private routing"| IntALB
+        BE -->|outbound only| NAT
+        CL -->|outbound only| NAT
+    end
+
+    subgraph Secrets["Secrets Manager"]
+        SM["OPENAI_API_KEY<br/>DATABASE_URL"]
+    end
+    BE -.->|injected at task start| SM
+
+    subgraph External["External"]
+        OAI["OpenAI API"]
+    end
+    NAT --> OAI
+
+    subgraph CICD["CI/CD — GitHub Actions"]
+        GH["PR: lint/typecheck/test"]
+        GH2["merge to main:<br/>build → push ECR → update ECS"]
+        ECR[("Amazon ECR")]
+        GH --> GH2 --> ECR
+        ECR -.->|image pull| FargateFE
+        ECR -.->|image pull| FargateBE
+        ECR -.->|image pull| FargateCL
+    end
+
+    PubUser -->|"WebSocket (HTTPS)"| WAF
+
+    classDef publicNode fill:#f96,stroke:#333,stroke-width:1px;
+    classDef privateNode fill:#bbf,stroke:#333,stroke-width:1px;
+    classDef storage fill:#9f9,stroke:#333,stroke-width:1px;
+    classDef external fill:#eee,stroke:#333,stroke-width:1px,stroke-dasharray: 3 3;
+
+    class PubALB,WAF,CL publicNode;
+    class IntALB,FE,BE,VPN privateNode;
+    class RDS,ECR storage;
+    class OAI,SM external;
+```
+
+#### Proposed Production RAG Pipeline, support **batch processing** at scale
+**note**: use of redis keystore for checks before queueing, and Apache Kafka for queue management
+
+```mermaid
+
+flowchart TD
+    classDef ingestion fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef queue fill:#fc9,stroke:#333,stroke-width:2px;
+    classDef cache fill:#9cf,stroke:#333,stroke-width:2px;
+    classDef storage fill:#f96,stroke:#333,stroke-width:2px;
+    classDef query fill:#bbf,stroke:#333,stroke-width:2px;
+    classDef worker fill:#9f9,stroke:#333,stroke-width:2px;
+
+    %% ---------------- Batch Upload / Ingestion ----------------
+    subgraph Upload["Batch Document Upload"]
+        A["Client<br/>(batch upload: N documents)"] --> B["Backend API<br/>POST /documents/batch"]
+    end
+
+    subgraph Dedup["Dedup Check"]
+        B --> C{"For each document:<br/>compute content hash<br/>(e.g. SHA-256)"}
+        C --> D["Redis Keystore<br/>EXISTS doc:hash?"]
+        D -->|"Yes — already<br/>ingested or in-flight"| E["Skip document<br/>return existing status"]
+        D -->|"No"| F["Redis SETNX<br/>doc:hash = QUEUED<br/>(atomic claim, prevents<br/>duplicate enqueue)"]
+    end
+
+    subgraph Queue["Kafka — Queue Management"]
+        F --> G["Kafka Producer"]
+        G --> H["Topic: document-ingestion<br/>(partitioned by doc hash)"]
+        H --> I["Consumer Group:<br/>ingestion-workers<br/>(horizontally scalable)"]
+        I -->|processing error<br/>after max retries| J["Topic: document-ingestion-dlq<br/>(dead-letter queue)"]
+    end
+
+    subgraph Worker["Ingestion Worker Pool"]
+        I --> K["Extract text + page count<br/>(pdfplumber)"]
+        K --> L["Chunk text"]
+        L --> M["Embed chunks<br/>(SentenceTransformer /<br/>Onnxruntime)"]
+        M --> N["Store chunks + vectors"]
+        N --> O["Store document metadata<br/>(filename, size, pages, filetype)"]
+        O --> P["Redis SET<br/>doc:hash = COMPLETED"]
+        K -.->|failure| Q["Redis SET<br/>doc:hash = FAILED"]
+        Q -.-> J
+    end
+
+    subgraph Storage["Postgres + pgvector"]
+        N --> R[("document_chunks<br/>(vector column)")]
+        O --> S[("document_files<br/>(metadata)")]
+    end
+
+    %% ---------------- Query Phase (unchanged) ----------------
+    subgraph QueryPhase["User Query & Generation Pipeline"]
+        T["User Query"] --> U["Embedding Model"]
+        U --> V["Vector Search"]
+        R -.->|Retrieve Context| V
+        V --> W1["Combine Query + Context"]
+        W1 --> W["Hybrid Search (RRF)"]
+        W --> X["Agentic Loop/LLM Prompt"]
+        X --> Y["Generated Response"]
+    end
+
+    class A,B,C ingestion;
+    class D,F,P,Q cache;
+    class G,H,I,J queue;
+    class K,L,M,N,O worker;
+    class R,S storage;
+    class T,U,V,W,X,Y query;
+
+
+```
+
 ---
 ### Challenges
 
 The docker install threw me off since it was taking a non-trivial amount of time to install. 
 
-**Root cause:** the default repo chainlit docker image
+> **Root cause:** the default repo chainlit docker image
 
 Manually located the instructions file from 
 <code>backend > app > home > routes.py</code>
@@ -214,3 +408,6 @@ locally (macos setup)
 
 On github codespace
 ![using github codespaces](codespaces.png)
+
+### AOB
+**note**: Go to `dev` branch to view individual commits

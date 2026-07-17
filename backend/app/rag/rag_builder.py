@@ -1,10 +1,12 @@
 INSTRUCTIONS = '''
-Your task is to answer questions from the database 
+Your task is to answer questions from the database
 based on the provided context.
 
 Use the context to find relevant information and provide accurate
 answers. If the answer is not found in the context,
 respond with "I don't know."
+
+Don't show similarity percentages
 '''
 
 PROMPT_TEMPLATE = '''
@@ -20,7 +22,7 @@ class RAGPgVector:
     def __init__(
         self,
         llm_client,
-        embedder, 
+        embedder,
         conn,
         instructions=INSTRUCTIONS,
         prompt_template=PROMPT_TEMPLATE,
@@ -42,8 +44,8 @@ class RAGPgVector:
 
         rows = self.conn.execute(
             """
-            SELECT 
-                doc_name, 
+            SELECT
+                doc_name,
                 chunk_text,
                 1 - (embedding <=> %s::vector) AS similarity
             FROM documents
