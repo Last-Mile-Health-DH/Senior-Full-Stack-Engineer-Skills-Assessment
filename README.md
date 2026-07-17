@@ -147,10 +147,10 @@ flowchart LR
     BE -->|"embed chunks<br/>(SentenceTransformer, local)"| BE
     BE -->|"chat completion"| OAI
 
-    classDef frontend fill:#bbf,stroke:#333,stroke-width:1px;
-    classDef backend fill:#f96,stroke:#333,stroke-width:1px;
-    classDef storage fill:#9f9,stroke:#333,stroke-width:1px;
-    classDef external fill:#eee,stroke:#333,stroke-width:1px,stroke-dasharray: 3 3;
+    classDef frontend fill:#a3bffa,stroke:#2b4c8c,stroke-width:1px,color:#1a1a1a;
+    classDef backend fill:#f6ad7a,stroke:#8c4a1a,stroke-width:1px,color:#1a1a1a;
+    classDef storage fill:#8fd9a8,stroke:#1f6b3a,stroke-width:1px,color:#1a1a1a;
+    classDef external fill:#e0e0e0,stroke:#555,stroke-width:1px,stroke-dasharray: 3 3,color:#1a1a1a;
 
     class FE,CL frontend;
     class BE backend;
@@ -178,9 +178,9 @@ In the implemented architecture, the frontend and backend layers are accessible 
 ```mermaid
 flowchart TD
     %% Styling Definitions
-    classDef ingestion fill:#f9f,stroke:#333,stroke-width:2px;
-    classDef query fill:#bbf,stroke:#333,stroke-width:2px;
-    classDef storage fill:#f96,stroke:#333,stroke-width:2px;
+    classDef ingestion fill:#e8a8d8,stroke:#7a2e64,stroke-width:2px,color:#1a1a1a;
+    classDef query fill:#a3bffa,stroke:#2b4c8c,stroke-width:2px,color:#1a1a1a;
+    classDef storage fill:#f6ad7a,stroke:#8c4a1a,stroke-width:2px,color:#1a1a1a;
 
     %% Ingestion Phase (Data Preparation)
     subgraph Ingestion_Phase [Data Ingestion Pipeline]
@@ -315,10 +315,10 @@ flowchart TB
 
     PubUser -->|"WebSocket (HTTPS)"| WAF
 
-    classDef publicNode fill:#f96,stroke:#333,stroke-width:1px;
-    classDef privateNode fill:#bbf,stroke:#333,stroke-width:1px;
-    classDef storage fill:#9f9,stroke:#333,stroke-width:1px;
-    classDef external fill:#eee,stroke:#333,stroke-width:1px,stroke-dasharray: 3 3;
+    classDef publicNode fill:#f6ad7a,stroke:#8c4a1a,stroke-width:1px,color:#1a1a1a;
+    classDef privateNode fill:#a3bffa,stroke:#2b4c8c,stroke-width:1px,color:#1a1a1a;
+    classDef storage fill:#8fd9a8,stroke:#1f6b3a,stroke-width:1px,color:#1a1a1a;
+    classDef external fill:#e0e0e0,stroke:#555,stroke-width:1px,stroke-dasharray: 3 3,color:#1a1a1a;
 
     class PubALB,WAF,CL publicNode;
     class IntALB,FE,BE,VPN privateNode;
@@ -332,12 +332,12 @@ flowchart TB
 ```mermaid
 
 flowchart TD
-    classDef ingestion fill:#f9f,stroke:#333,stroke-width:2px;
-    classDef queue fill:#fc9,stroke:#333,stroke-width:2px;
-    classDef cache fill:#9cf,stroke:#333,stroke-width:2px;
-    classDef storage fill:#f96,stroke:#333,stroke-width:2px;
-    classDef query fill:#bbf,stroke:#333,stroke-width:2px;
-    classDef worker fill:#9f9,stroke:#333,stroke-width:2px;
+    classDef ingestion fill:#e8a8d8,stroke:#7a2e64,stroke-width:2px,color:#1a1a1a;
+    classDef queue fill:#f5c26b,stroke:#8c5a1a,stroke-width:2px,color:#1a1a1a;
+    classDef cache fill:#7ec8e3,stroke:#1a5a7a,stroke-width:2px,color:#1a1a1a;
+    classDef storage fill:#f6ad7a,stroke:#8c4a1a,stroke-width:2px,color:#1a1a1a;
+    classDef query fill:#a3bffa,stroke:#2b4c8c,stroke-width:2px,color:#1a1a1a;
+    classDef worker fill:#8fd9a8,stroke:#1f6b3a,stroke-width:2px,color:#1a1a1a;
 
     %% ---------------- Batch Upload / Ingestion ----------------
     subgraph Upload["Batch Document Upload"]
