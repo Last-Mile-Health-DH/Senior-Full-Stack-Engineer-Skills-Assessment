@@ -43,7 +43,7 @@ builds from its own multi-stage Dockerfile (`backend/Dockerfile`, `frontend/Dock
 
 ```
 cp .env.example .env
-# edit .env: set OPENAI_API_KEY (and ANTHROPIC_API_KEY if you use it)
+# edit .env: set OPENAI_API_KEY
 docker compose -p assessment up -d --build
 ```
 
@@ -59,7 +59,7 @@ need to supply the API key(s) in `.env`. It's loaded into the backend container 
 runtime, never baked into the image (`.env*` is excluded via `.dockerignore`). Stop everything with
 `docker compose -p assessment down`.
 
-
+> Running the docker command can take upto ten minutes (specifically the chainlit container build)
 
 ### Backend (FastAPI)
 
@@ -219,6 +219,8 @@ flowchart TD
 
 **Ability to Create Knowledgebase**: Ability to create knowledgebase that bundle similar sources of information - in this case uploaded pdfs
 
+**Litellm** - Wrap the LLM Api calls in litellm (An open gateway that unifies LLM APIs), which would enable quick switching between LLM providers
+
 **Cloud provider**: AWS Backend and Chainlit as containerized services on Amazon Elastic Container Service(**ECS Fargate**), which is serveless compute infra, behind an Amazon Elastic Load Balance (**ALB**); frontend as a static build on **CloudFront**; database on **RDS for PostgreSQL** with the `pgvector` extension enabled, in a private subnet reachable only from the Fargate tasks.
 
 **CI/CD** (using GitHub Actions):
@@ -237,8 +239,8 @@ flowchart TD
   actually route around an unhealthy instance.-->
 - The `SentenceTransformer` embedder loads into memory once per instance at startup — size Fargate task
   memory accordingly and consider a minimum warm instance count to avoid cold-start latency on scale-out.
-- Connection pool size × number of backend replicas must stay under RDS's `max_connections`; add
-  **PgBouncer** (or RDS Proxy) if the service scales beyond a handful of replicas.
+<!--- Connection pool size × number of backend replicas must stay under RDS's `max_connections`; add
+  **PgBouncer** (or RDS Proxy) if the service scales beyond a handful of replicas.-->
 - Structured logging + an error tracker (e.g. Sentry) wired into the existing global exception handler for
   production visibility beyond the current server-side traceback logging.
 
@@ -411,3 +413,5 @@ On github codespace
 
 ### AOB
 **note**: Go to `dev` branch to view individual commits
+
+##### *now that you're here you can also checkout the [scrabble app](https://github.com/dakn2005/scrabble-realtime) on this repository; click on the title link to take to the live deploy hosted on render*
