@@ -35,6 +35,8 @@ ARG HOME_DIR=/usr/src/${NAME}
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ffmpeg \
     libpq5 \
+    poppler-utils \
+    tesseract-ocr \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=build /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
